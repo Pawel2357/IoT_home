@@ -66,9 +66,7 @@ void publish_data()
   if (Serial.available() > 0) {
     // read the incoming byte:
     String msg = Serial.readString();
-    if (msg=="bla bla"){
-      client.publish("test", "aa");
-    }
+    client.publish("test", (char*) msg.c_str());
   }
   //client.publish("test", "Hello from ESP32");
 }
