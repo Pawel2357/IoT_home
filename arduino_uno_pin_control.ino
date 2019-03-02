@@ -20,6 +20,6 @@ void loop() {
     }if (a == "1"){
       digitalWrite(ledPin, HIGH);
     }
-    Serial.println(a);
+    Serial.write("bla bla");
   }
 }
