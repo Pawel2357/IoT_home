@@ -21,3 +21,13 @@ sudo apt-get update
 sudo apt-get install mosquitto
 sudo apt-get install mosquitto-clients
 pip3 install paho-mqtt
+
+Useful links
+https://icircuit.net/arduino-connecting-arduino-uno-esp8266/2443
+https://techtutorialsx.com/2017/04/09/esp8266-connecting-to-mqtt-broker/
+https://thingsboard.io/docs/samples/arduino/temperature/#esp8266-firmware
+https://slashposts.com/2018/04/mqtt-pubsubclient-tutorial-for-arduino-esp8266-esp32/
+https://techtutorialsx.com/2017/04/24/esp32-publishing-messages-to-mqtt-topic/
+good paho python tutorial http://www.steves-internet-guide.com/into-mqtt-python-client/
+http://www.steves-internet-guide.com/mqtt-python-callbacks/
+http://www.steves-internet-guide.com/loop-python-mqtt-client/
