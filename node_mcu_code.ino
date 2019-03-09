@@ -17,6 +17,7 @@ void send_to_arduino(char receivedChar){
  
 void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
+ // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
  for (int i=0;i<length;i++) {
   char receivedChar = (char)payload[i];
   send_to_arduino(receivedChar);

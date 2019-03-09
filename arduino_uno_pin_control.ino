@@ -37,16 +37,18 @@ void loop() {
     // read the incoming byte:
     a = Serial.readString();
 
+    // TODO: iterate over elements in this string or look at nodemcu
+
     // say what you got:
     if (a == "0"){
       digitalWrite(relay_pin, LOW); 
     }if (a == "1"){
       digitalWrite(relay_pin, HIGH);
-    }if (a == "air"){
+    }if (a == "a"){
       Serial.print(measure_air_quality());
-    }if (a == "temp"){
+    }if (a == "t"){
       Serial.print(measure_temp());
-    }if (a == "humidity"){
+    }if (a == "h"){
       Serial.print(measure_humidity());
     }
   }

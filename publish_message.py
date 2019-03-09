@@ -2,7 +2,7 @@ import paho.mqtt.publish as publish
 import time
 import paho.mqtt.client as mqtt
 
-broker_adress = "192.168.0.120"
+broker_adress = "192.168.0.120" # to use server "40.121.36.126"
 client = mqtt.Client("P1")
 client.connect(broker_adress)
 print("Sending 0...")
