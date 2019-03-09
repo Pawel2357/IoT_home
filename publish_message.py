@@ -10,6 +10,7 @@ client.publish("sensors_3d_printing_room", "0")
 time.sleep(3)
 print("Sending 1...")
 client.publish("sensors_3d_printing_room", "1")
+time.sleep(4)
 
 def on_message(client, userdata, message):
      print("message", str(message.payload.decode("utf-8")))
@@ -22,7 +23,9 @@ while True:
 	client.loop_start()
 	client.subscribe("test")
 	client.publish("sensors_3d_printing_room", "a")
+	time.sleep(4)
 	client.publish("sensors_3d_printing_room", "t")
+	time.sleep(4)
 	client.publish("sensors_3d_printing_room", "h")
 	time.sleep(4)
 	client.loop_stop()
