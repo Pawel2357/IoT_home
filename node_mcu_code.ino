@@ -7,28 +7,19 @@
 const char* ssid = "Dom";
 const char* password = "izabelin";
 const char* mqtt_server = "192.168.0.120";
-String a;
  
 WiFiClient espClient;
 PubSubClient client(espClient);
- 
-const byte ledPin = 16;
 
-void control_device(char receivedChar){
+void send_to_arduino(char receivedChar){
   Serial.write(receivedChar);
-  if (receivedChar == '0')
-    digitalWrite(ledPin, HIGH);
-  if (receivedChar == '1')
-    digitalWrite(ledPin, LOW);
 }
  
 void callback(char* topic, byte* payload, unsigned int length) {
- //Serial.print("Message arrived [");
- //Serial.print(topic);
- //Serial.print("] ");
+ // get subscribed message char by char
  for (int i=0;i<length;i++) {
   char receivedChar = (char)payload[i];
-  control_device(receivedChar);
+  send_to_arduino(receivedChar);
   }
 }
 
@@ -41,7 +32,7 @@ void reconnect() {
  if (client.connect("ESP8266 Client")) {
    //Serial.println("connected");
    // ... and subscribe to topic
-  client.subscribe("ledStatus");
+   client.subscribe("sensors_3d_printing_room");
  } else {
    //Serial.print("failed, rc=");
    //Serial.print(client.state());
@@ -57,7 +48,6 @@ void setup()
   Serial.begin(9600);
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-  pinMode(ledPin, OUTPUT);
 }
 
 
