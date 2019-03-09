@@ -1,6 +1,12 @@
 String a; //Initialized variable to store recieved data
 const int ledPin = 13;
 
+int measure_air_quality(){
+  int sensorValue = analogRead(A0);
+  String strValue = String(sensorValue);
+  return sensorValue;
+}
+
 void setup() {
   //Serial Begin at 9600 Baud 
   pinMode(ledPin, OUTPUT);
@@ -20,6 +26,6 @@ void loop() {
     }if (a == "1"){
       digitalWrite(ledPin, HIGH);
     }
-    Serial.write("bla bla");
+    Serial.print(measure_air_quality());
   }
 }
