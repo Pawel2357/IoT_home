@@ -41,7 +41,7 @@ void reconnect() {
    Serial.print(client.state());
    Serial.println(" try again in 5 seconds");
    // Wait 5 seconds before retrying
-   delay(5000);
+   delay(2000);
    }
  }
 }
@@ -74,10 +74,12 @@ void loop()
       if (!client.connected()) {
         reconnect();
       }
+      Serial.print("gps ok");
       client.loop();
       String data;
-      data = "lat," + String(gps.location.lat()) + ",lon," + String(gps.location.lng()) + "speed" + String(gps.speed.kmph());
+      data = "lat," + String(gps.location.lat(), 8) + ",lon," + String(gps.location.lng(), 8) + "speed" + String(gps.speed.kmph());
       publish_data(data);
+      delay(300);
     }
   }
 }
