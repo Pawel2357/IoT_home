@@ -41,7 +41,7 @@ void reconnect() {
    Serial.print(client.state());
    Serial.println(" try again in 5 seconds");
    // Wait 5 seconds before retrying
-   delay(2000);
+   delay(5000);
    }
  }
 }
@@ -56,8 +56,9 @@ void setup()
 void publish_data(String data)
 {
     // read the incoming byte:
-    Serial.print(data);
+    // Serial.print(data);
     char* cdata = strdup(data.c_str());
+    yield();
     client.publish("smart_leaf_gps", (char*) cdata);
 }
 
@@ -65,21 +66,24 @@ void publish_data(String data)
 void loop()
 {
   if (!client.connected()) {
-  reconnect();
+    reconnect();
   }
+  yield();
   client.loop();
-  while (ss.available() > 0){
+  yield();
+  ESP.wdtDisable();
+  if (ss.available() > 0){
+    yield();
     gps.encode(ss.read());
+    yield();
     if (gps.location.isUpdated()){
-      if (!client.connected()) {
-        reconnect();
-      }
       Serial.print("gps ok");
-      client.loop();
       String data;
-      data = "lat," + String(gps.location.lat(), 8) + ",lon," + String(gps.location.lng(), 8) + "speed" + String(gps.speed.kmph());
+      data = "lat," + String(gps.location.lat(), 8) + ",lon," + String(gps.location.lng(), 8) + ",speed," + String(gps.speed.kmph());
+      yield();
       publish_data(data);
-      delay(300);
+      delay(500);
     }
   }
+  ESP.wdtEnable(1); // TODO: more documentation needed
 }
