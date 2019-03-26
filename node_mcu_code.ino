@@ -56,7 +56,7 @@ void publish_data()
 {
   if (Serial.available() > 0) {
     // read the incoming byte:
-    String msg = Serial.readString();
+    String msg = Serial.readString(); // TODO: This should be a separate method for recieving data from arduino
     client.publish("test", (char*) msg.c_str());
   }
   //client.publish("test", "Hello from ESP32");
