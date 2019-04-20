@@ -4,7 +4,7 @@ ESP, usb_to_ttl<br/>
 RX - TX<br/>
 TX - RX<br/>
 3.3 v - 3.3 v<br/>
-RST - GND<br/>
+EN - 3.3 v<br/>
 GND - GND<br/>
 GPIO 0 - 1k ohm - GND<br/>
 
