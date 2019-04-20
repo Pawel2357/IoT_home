@@ -1,4 +1,10 @@
-## How to program esp-01:
+## Nodemcu v3
+### Arduino IDE settings
+- board NodeMCU 1.0
+- upload speed 115200
+
+
+## ESP-01:
 ### Connections:
 ESP, usb_to_ttl<br/>
 RX - TX<br/>
