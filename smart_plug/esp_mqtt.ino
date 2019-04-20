@@ -6,7 +6,7 @@
 // Connect to the WiFi
 const char* ssid = "Dom";
 const char* password = "izabelin";
-const char* mqtt_server = "192.168.0.120";
+const char* mqtt_server = "0.0.0.0";
  
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -28,16 +28,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
-   //Serial.print("Attempting MQTT connection...");
+   Serial.print("Attempting MQTT connection...");
+   yield();
    // Attempt to connect
  if (client.connect("ESP8266 Client")) {
-   //Serial.println("connected");
+   Serial.println("connected");
    // ... and subscribe to topic
    client.subscribe("control_1");
  } else {
-   //Serial.print("failed, rc=");
-   //Serial.print(client.state());
-   //Serial.println(" try again in 5 seconds");
+   Serial.print("failed, rc=");
+   Serial.print(client.state());
+   Serial.println(" try again in 5 seconds");
    // Wait 5 seconds before retrying
    delay(5000);
    }
@@ -57,7 +58,7 @@ void publish_data()
   if (Serial.available() > 0) {
     // read the incoming byte:
     String msg = Serial.readString(); // TODO: This should be a separate method for recieving data from arduino
-    client.publish("data_1", (char*) msg.c_str());
+    client.publish("control_pub_1", (char*) msg.c_str());
   }
   //client.publish("test", "Hello from ESP32");
 }
