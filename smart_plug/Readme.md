@@ -2,7 +2,8 @@
 ### Arduino IDE settings
 - board NodeMCU 1.0
 - upload speed 115200
-
+#### Connect more then one client to the same broker
+- make sure each client has different client_id
 
 ## ESP-01:
 ### Connections:
