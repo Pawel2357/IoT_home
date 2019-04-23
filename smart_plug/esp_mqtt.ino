@@ -7,7 +7,7 @@
 const char* ssid = "Dom";
 const char* password = "izabelin";
 const char* mqtt_server = "0.0.0.0";
- 
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -28,17 +28,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
+   //Serial.print("Attempting MQTT connection...");
    yield();
    // Attempt to connect
- if (client.connect("ESP8266 Client")) {
-   Serial.println("connected");
+ if (client.connect("control_1")) {
+   //Serial.println("connected");
    // ... and subscribe to topic
    client.subscribe("control_1");
  } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
+   //Serial.print("failed, rc=");
+   //Serial.print(client.state());
+   //Serial.println(" try again in 5 seconds");
    // Wait 5 seconds before retrying
    delay(5000);
    }
