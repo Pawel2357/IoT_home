@@ -2,6 +2,22 @@
 ### Arduino IDE settings
 - board NodeMCU 1.0
 - upload speed 115200
+### Parts used in the plug
+- NodeMCU v3
+- digital logic converter 3.3-5v
+- arduino uno/mini pro
+- power supply 5v
+- relay 5v
+### Connections
+#### arduino - relay
+Connect relay in to pin 13 arduino
+#### Connection arduino-nodemcu using digital logic converter
+arduino - nodemcu
+tx - rx
+rx - tx
+gnd - gnd
+_ - 3.3v
+
 #### Connect more then one client to the same broker
 - make sure each client has different client_id
 
