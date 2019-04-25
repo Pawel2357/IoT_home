@@ -12,10 +12,10 @@
 #### arduino - relay
 Connect relay in to pin 13 arduino
 #### Connection arduino-nodemcu using digital logic converter
-arduino - nodemcu
-tx - rx
-rx - tx
-gnd - gnd
+arduino - nodemcu<br/>
+tx - rx<br/>
+rx - tx<br/>
+gnd - gnd<br/>
 _ - 3.3v
 
 #### Connect more then one client to the same broker
