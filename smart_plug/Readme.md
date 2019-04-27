@@ -8,6 +8,7 @@
 - arduino uno/mini pro
 - power supply 5v
 - relay 5v
+- usb-to-ttl to program arduino mini pro
 ### Connections
 #### arduino - relay
 Connect relay in to pin 13 arduino
@@ -16,7 +17,12 @@ arduino - nodemcu<br/>
 tx - rx<br/>
 rx - tx<br/>
 gnd - gnd<br/>
-_ - 3.3v
+_ - 3.3v<br/>
+#### Program arduino mini-pro
+arduino - usb-to-ttl
+tx - rx<br/>
+gnd - gnd<br/>
+Vin - 5v<br/>
 
 #### Connect more then one client to the same broker
 - make sure each client has different client_id
