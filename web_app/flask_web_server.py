@@ -19,6 +19,16 @@ def index():
             client.connect("40.121.36.126", 1883)
             client.publish("sensors_3d_printing_room", "1")
             time.sleep(1)
+        elif request.form.get('beast on') == 'beast on':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            client.publish("control_1", "0")
+            time.sleep(1)
+        elif request.form.get('beast off') == 'beast off':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            client.publish("control_1", "1")
+            time.sleep(1)
         else:
             # pass # unknown
             with open("/home/pawel2357/3d_printer.txt") as f:
