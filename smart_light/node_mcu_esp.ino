@@ -31,6 +31,7 @@ PubSubClient client(espClient);
 int n_r = 255;
 int n_g = 255;
 int n_b = 255;
+int n_i = 255;
 
 void callback(char* topic, byte* payload, unsigned int length) {
   // get subscribed message char by char
@@ -38,21 +39,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
   payload[length] = '\0'; // Make payload a string by NULL terminating it.
   String wholeVal = (char *)payload;
   int number = wholeVal.substring(1, wholeVal.length()).toInt();
-  String color_type = wholeVal.substring(0, 1);
+  String data_type = wholeVal.substring(0, 1);
   Serial.print(number);
-  Serial.println(color_type);
+  Serial.println(data_type);
   String r = String('r');
   String g = String('g');
   String b = String('b');
-  if(color_type == r){
+  String i = String('i');
+  if(data_type == r){
     n_r = number;
   }
-  if(color_type == g){
+  if(data_type == g){
     n_g = number;
   }
-  if(color_type == b){
+  if(data_type == b){
     n_b = number;
   }
+  if(data_type == i){
+    n_i = number;
+  }
+
+  pixels.setBrightness(n_i);
   pixels.setPixelColor(0, pixels.Color(n_r, n_g, n_b)); // Moderately bright green color.
   pixels.show(); // This sends the updated pixel color to the hardware.
 }
@@ -122,5 +129,4 @@ void loop() {
     reconnect();
   }
   client.loop();
-
 }
