@@ -60,7 +60,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   pixels.setBrightness(n_i);
-  pixels.setPixelColor(0, pixels.Color(n_r, n_g, n_b)); // Moderately bright green color.
+  // Fix note: r swipped with g. This is grb diode.
+  pixels.setPixelColor(0, pixels.Color(n_g, n_r, n_b)); // Moderately bright green color.
   pixels.show(); // This sends the updated pixel color to the hardware.
 }
 
@@ -122,6 +123,7 @@ void setup() {
 }
 
 void loop() {
+    // Fix note: r swipped with g. This is grb diode.
     pixels.setPixelColor(0, pixels.Color(n_r, n_g, n_b)); // Moderately bright green color.
     pixels.show(); // This sends the updated pixel color to the hardware.
 

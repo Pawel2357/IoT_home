@@ -2,6 +2,20 @@ from flask import Flask, render_template, request
 import paho.mqtt.client as mqtt
 import time
 
+
+def change_color(client, r, g, b, intensity):
+    if r != '':
+        client.publish("lamp_1", "r" + str(r))
+    time.sleep(0.05)
+    if g != '':
+        client.publish("lamp_1", "g" + str(g))
+    time.sleep(0.05)
+    if b != '':
+        client.publish("lamp_1", "b" + str(b))
+    time.sleep(0.05)
+    if intensity != '':
+        client.publish("lamp_1", "i" + str(intensity))
+
 app = Flask(__name__)
 
 
@@ -33,17 +47,34 @@ def index():
             client = mqtt.Client()
             client.connect("40.121.36.126", 1883)
             r = request.form['r']
-            client.publish("lamp_1", "r" + str(r))
-            time.sleep(0.1)
             g = request.form['g']
-            client.publish("lamp_1", "g" + str(g))
-            time.sleep(0.1)
             b = request.form['b']
-            client.publish("lamp_1", "b" + str(b))
-            time.sleep(0.1)
             intensity = request.form['intensity']
-            client.publish("lamp_1", "i" + str(intensity))
-            time.sleep(1)
+            change_color(client, r, g, b, intensity)
+        elif request.form.get('Off lamp') == 'Off lamp':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 255, 255, 255, 0)
+        elif request.form.get('White') == 'White':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 255, 255, 255, 255)
+        elif request.form.get('Blue') == 'Blue':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 0,191,255, 255)
+        elif request.form.get('Yellow') == 'Yellow':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 255,255,0, 255)
+        elif request.form.get('Green') == 'Green':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 50,205,50, 255)
+        elif request.form.get('Red') == 'Red':
+            client = mqtt.Client()
+            client.connect("40.121.36.126", 1883)
+            change_color(client, 255,69,0, 255)
         else:
             # pass # unknown
             with open("/home/pawel2357/3d_printer.txt") as f:
