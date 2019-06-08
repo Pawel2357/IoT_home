@@ -2,6 +2,7 @@
     <body>
 
         <form method="post" action="/">
+            <div>
                 <h2>3d printer factory control</h2>
                 <input size="16" type="submit" value="Turn off" name="Turn off"/>
                 <input size="16" type="submit" value="Turn on" name="Turn on" />
@@ -19,6 +20,12 @@
                 <h2>Smart car control</h2>
                 <p> parking position </p>
                 <p> position: {{car_value}}</p>
+                <h2>Smart lamp 1</h2>
+                <p>R <input type = "text" name = "r" /></p>
+                <p>G <input type = "text" name = "g" /></p>
+                <p>B <input type = "text" name = "b" /></p>
+                <p>Intensity <input type ="text" name = "intensity" /></p>
+                <p><input type = "submit" value = "change color" name="change color" /></p>
             </div>
         </form>
     </body>
