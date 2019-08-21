@@ -46,6 +46,16 @@ def index():
             client.connect(broker_IP, 1883)
             client.publish("control_1", "1")
             time.sleep(1)
+        elif request.form.get('Living room renovable on') == 'Living room renovable on':
+            client = mqtt.Client()
+            client.connect(broker_IP, 1883)
+            client.publish("renovable_control", "6")
+            time.sleep(1)
+        elif request.form.get('Living room renovable off') == 'Living room renovable off':
+            client = mqtt.Client()
+            client.connect(broker_IP, 1883)
+            client.publish("renovable_control", "e")
+            time.sleep(1)
         elif request.form.get('change color') == 'change color':
             client = mqtt.Client()
             client.connect(broker_IP, 1883)
