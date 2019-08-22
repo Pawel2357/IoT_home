@@ -8,6 +8,9 @@ const char* ssid = "Dom";
 const char* password = "izabelin";
 const char* mqtt_server = "0.0.0.0";
 
+const char* mqtt_client_name = "renovable_control";
+const char* topic_subscribe = "renovable_control";
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -43,10 +46,10 @@ void reconnect() {
    //Serial.print("Attempting MQTT connection...");
    yield();
    // Attempt to connect
- if (client.connect("control_1")) {
+ if (client.connect(mqtt_client_name)) {
    //Serial.println("connected");
    // ... and subscribe to topic
-   client.subscribe("renovable_control");
+   client.subscribe(topic_subscribe);
  } else {
    //Serial.print("failed, rc=");
    //Serial.print(client.state());
