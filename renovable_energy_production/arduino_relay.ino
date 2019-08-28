@@ -1,12 +1,12 @@
 String a; //Initialized variable to store recieved data
-const int pin_1 = 1;
-const int pin_2 = 2;
-const int pin_3 = 3;
-const int pin_4 = 4;
-const int pin_5 = 5;
-const int pin_6 = 6;
-const int pin_7 = 7;
-const int pin_8 = 8;
+const int pin_1 = 2;
+const int pin_2 = 3;
+const int pin_3 = 4;
+const int pin_4 = 5;
+const int pin_5 = 6;
+const int pin_6 = 7;
+const int pin_7 = 8;
+const int pin_8 = 9;
 
 void setup() {
   //Serial Begin at 9600 Baud
@@ -27,36 +27,36 @@ void loop() {
     if (a == "1"){
       digitalWrite(pin_1, LOW);
       //Serial.print(a);
-    }if (a == "9"){
-      digitalWrite(pin_1, HIGH);
-    }if (a == "2"){
-      digitalWrite(pin_1, LOW);
     }if (a == "a"){
       digitalWrite(pin_1, HIGH);
-    }if (a == "3"){
-      digitalWrite(pin_1, LOW);
+    }if (a == "2"){
+      digitalWrite(pin_2, LOW);
     }if (a == "b"){
-      digitalWrite(pin_1, HIGH);
-    }if (a == "4"){
-      digitalWrite(pin_1, LOW);
+      digitalWrite(pin_2, HIGH);
+    }if (a == "3"){
+      digitalWrite(pin_3, LOW);
     }if (a == "c"){
-      digitalWrite(pin_1, HIGH);
-    }if (a == "5"){
-      digitalWrite(pin_1, LOW);
+      digitalWrite(pin_3, HIGH);
+    }if (a == "4"){
+      digitalWrite(pin_4, LOW);
     }if (a == "d"){
-      digitalWrite(pin_1, HIGH);
+      digitalWrite(pin_4, HIGH);
+    }if (a == "5"){
+      digitalWrite(pin_5, LOW);
+    }if (a == "d"){
+      digitalWrite(pin_5, HIGH);
     }if (a == "6"){
-      digitalWrite(pin_1, LOW);
+      digitalWrite(pin_6, LOW);
     }if (a == "e"){
-      digitalWrite(pin_1, HIGH);
+      digitalWrite(pin_6, HIGH);
     }if (a == "7"){
-      digitalWrite(pin_1, LOW);
+      digitalWrite(pin_7, LOW);
     }if (a == "f"){
-      digitalWrite(pin_1, HIGH);
+      digitalWrite(pin_7, HIGH);
     }if (a == "8"){
-      digitalWrite(pin_1, LOW);
+      digitalWrite(pin_8, LOW);
     }if (a == "g"){
-      digitalWrite(pin_1, HIGH);
+      digitalWrite(pin_8, HIGH);
     }
   }
 }
