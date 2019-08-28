@@ -10,9 +10,23 @@ const int pin_8 = 9;
 
 void setup() {
   //Serial Begin at 9600 Baud
-  pinMode(relay_pin, OUTPUT);
+  pinMode(pin_1, OUTPUT);
+  pinMode(pin_2, OUTPUT);
+  pinMode(pin_3, OUTPUT);
+  pinMode(pin_4, OUTPUT);
+  pinMode(pin_5, OUTPUT);
+  pinMode(pin_6, OUTPUT);
+  pinMode(pin_7, OUTPUT);
+  pinMode(pin_8, OUTPUT);
   Serial.begin(9600);
-  digitalWrite(relay_pin, HIGH);
+  digitalWrite(pin_1, HIGH);
+  digitalWrite(pin_2, HIGH);
+  digitalWrite(pin_3, HIGH);
+  digitalWrite(pin_4, HIGH);
+  digitalWrite(pin_5, HIGH);
+  digitalWrite(pin_6, HIGH);
+  digitalWrite(pin_7, HIGH);
+  digitalWrite(pin_8, HIGH);
 }
 
 void loop() {
