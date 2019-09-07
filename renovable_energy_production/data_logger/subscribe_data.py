@@ -13,7 +13,7 @@ def save_to_file(filename, message):
 
 def on_connect(client, userdata, flags, rc):
   print("Connected with result code " + str(rc))
-  client.subscribe("air_quality_3d_printer")
+  client.subscribe(soc_battery_topic)
 
 def on_message(client, userdata, msg):
   localtime = time.asctime(time.localtime(time.time()))
