@@ -412,12 +412,6 @@ void loop(){
     "Equlization"
   };
 
-
-
-  
-  
-  
-  
   
 
    // flash the led
@@ -577,8 +571,8 @@ void loop(){
     Serial.print("Miss read ChargeState, ret val:");
     Serial.println(result, HEX);
   }
-  String soc = "," + batterySOC/1.0f + ",";
-  publish_data(String soc);
+  String soc = "," + String(batterySOC/1.0f) + ",";
+  publish_data(soc);
   delay(5000);
   
   //Serial.printf( "\n  Battery SOC:      %7.0f  %% ",     batterySOC/1.0f  );
