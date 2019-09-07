@@ -63,7 +63,7 @@
 
 
 // Connect to the WiFi
-const char* ssid =        "Dom";
+const char* ssid =        "Dom_2_4";
 const char* password =    "izabelin";
 const char* mqtt_server = "192.168.1.198";
 uint16_t sleepSeconds =    120;         // 2 minutes default
@@ -170,6 +170,29 @@ int debug_mode = 0;             // no sleep and mmore updates
 
 
 
+void setup_wifi() {
+
+    delay(10);
+    // We start by connecting to a WiFi network
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+}
+
+
 void setup(){
   
 
@@ -231,29 +254,6 @@ void setup(){
 }
 
 
-void setup_wifi() {
-
-    delay(10);
-    // We start by connecting to a WiFi network
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-}
-
-
 void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
@@ -277,10 +277,7 @@ void reconnect() {
 
 void publish_data(String soc)
 {
-  if (Serial.available() > 0) {
-    client.publish("home_battery_soc", (char*) soc.c_str());
-  }
-  //client.publish("test", "Hello from ESP32");
+  client.publish(data_topic, (char*) soc.c_str());
 }
 
 
@@ -493,6 +490,11 @@ void loop(){
   if (result == node.ku8MBSuccess)  {
     
     batterySOC = node.getResponseBuffer(0);
+
+    String soc = "," + String(batterySOC) + ",";
+    Serial.print(soc);
+    publish_data(soc);
+    delay(20000);
     
   } else  {
     Serial.print("Miss read batterySOC, ret val:");
@@ -571,9 +573,7 @@ void loop(){
     Serial.print("Miss read ChargeState, ret val:");
     Serial.println(result, HEX);
   }
-  String soc = "," + String(batterySOC/1.0f) + ",";
-  publish_data(soc);
-  delay(5000);
+  //delay(5000);
   
   //Serial.printf( "\n  Battery SOC:      %7.0f  %% ",     batterySOC/1.0f  );
 
