@@ -18,3 +18,6 @@ Router using device mac adress https://www.tp-link.com/pl/support/faq/714/
 `tmux`  
 `python3 app_name.py &`  
 `tmux detach`
+
+## To-Do next steps
+Improve the server by using gunicorn. See https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xvii-deployment-on-linux-even-on-the-raspberry-pi
