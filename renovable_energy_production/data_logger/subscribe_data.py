@@ -32,7 +32,7 @@ def load_off(client):
 def on_message(client, userdata, msg):
     localtime = time.asctime(time.localtime(time.time()))
     with open('soc_data.csv', mode='wa') as file_soc:
-        soc = str(msg.payload.decode("utf-8"))
+        soc = int(str(msg.payload.decode("utf-8"))[1:-2])
 
         soc_data_writer = csv.writer(file_soc, delimiter=',')
         soc_data_writer.writerow([localtime, soc])
