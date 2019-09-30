@@ -7,14 +7,25 @@
  */
 
 #include "DHT.h"
-#include "MQ135.h"
+
+//Include the library
+#include <MQUnifiedsensor.h>
 
 #define DHTPIN 4     // what digital pin the DHT22 is conected to
 #define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
-#define ANALOGPIN A0
+
+//Definitions
+#define pin A0 //Analog input 0 of your arduino
+#define type 135 //MQ135
 
 DHT dht(DHTPIN, DHTTYPE);
-MQ135 gasSensor = MQ135(ANALOGPIN);
+
+//Declare Sensor
+MQUnifiedsensor MQ135(pin, type);
+
+//Variables
+float CO, Alcohol, CO2, Tolueno, NH4, Acetona;
+
 
 void setup() {
   Serial.begin(9600);
@@ -27,6 +38,7 @@ void setup() {
   Serial.println("-------------------------------------");
   Serial.println("Running DHT!");
   Serial.println("-------------------------------------");
+  MQ135.inicializar();
 
 }
 
@@ -75,8 +87,26 @@ void loop() {
   delay(100);
   timeSinceLastRead += 100;
 
-  float rzero = gasSensor.getRZero(); //this to get the rzero value, uncomment this to get ppm value
-  float ppm = gasSensor.getPPM(); 
-  Serial.print("ppm: "); // this to display the rzero value continuously, uncomment this to get ppm value
-  Serial.println(ppm);
+  MQ135.update();
+
+  CO =  MQ135.readSensor("CO"); // Return CO concentration
+  Alcohol =  MQ135.readSensor("Alcohol"); // Return Alcohol concentration
+  CO2 =  MQ135.readSensor("CO2"); // Return CO2 concentration
+  Tolueno =  MQ135.readSensor("Tolueno"); // Return Tolueno concentration
+  NH4 =  MQ135.readSensor("NH4"); // Return NH4 concentration
+  Acetona =  MQ135.readSensor("Acetona"); // Return Acetona concentration
+
+
+  Serial.println("***************************");
+  Serial.println("Lectures for MQ-135");
+  Serial.print("Volt: ");Serial.print(MQ135.getVoltage(false));Serial.println(" V"); 
+  Serial.print("R0: ");Serial.print(MQ135.getR0());Serial.println(" Ohm"); 
+  Serial.print("CO: ");Serial.print(CO,2);Serial.println(" ppm");
+  Serial.print("Alcohol: ");Serial.print(Alcohol,2);Serial.println(" ppm");
+  Serial.print("CO2: ");Serial.print(CO2,2);Serial.println(" ppm");
+  Serial.print("Tolueno: ");Serial.print(Tolueno,2);Serial.println(" ppm");
+  Serial.print("NH4: ");Serial.print(NH4,2);Serial.println(" ppm");
+  Serial.print("Acetona: ");Serial.print(Acetona,2);Serial.println(" ppm");
+  Serial.println("***************************");  
+  
 }
