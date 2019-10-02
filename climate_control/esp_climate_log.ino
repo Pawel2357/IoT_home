@@ -24,14 +24,7 @@ const char* ssid =        "Dom_2_4";
 const char* password =    "izabelin";
 const char* mqtt_server = "192.168.1.198";
 char* MQTT_client =       "climate_log";
-char* humidity_t =        "humidity_climate";
-char* temp_t =            "temp_climate";
-char* co_t =              "co_climate";
-char* alcohol_t =         "alcohol_climate";
-char* co2_t =             "co2_climate";
-char* tolueno_t =         "tolueno_climate";
-char* nh4_t =             "nh4_climate";
-char* acetona_t =         "acetona_climate";
+char* climate_topic =     "data_climate";
 
 
 
@@ -155,11 +148,9 @@ void loop() {
 
     Serial.print("Humidity: ");
     Serial.print(h);
-    publish_data(humidity_t, String(h));
     Serial.print(" %\t");
     Serial.print("Temperature: ");
     Serial.print(t);
-    publish_data(temp_t, String(t));
     Serial.print(" *C ");
     
 
@@ -178,18 +169,15 @@ void loop() {
     Serial.print("Volt: ");Serial.print(MQ135.getVoltage(false));Serial.println(" V"); 
     Serial.print("R0: ");Serial.print(MQ135.getR0());Serial.println(" Ohm"); 
     Serial.print("CO: ");Serial.print(CO,2);Serial.println(" ppm");
-    publish_data(co_t, String(CO));
     Serial.print("Alcohol: ");Serial.print(Alcohol,2);Serial.println(" ppm");
-    publish_data(alcohol_t, String(Alcohol));
     Serial.print("CO2: ");Serial.print(CO2,2);Serial.println(" ppm");
-    publish_data(co2_t, String(CO2));
     Serial.print("Tolueno: ");Serial.print(Tolueno,2);Serial.println(" ppm");
-    publish_data(tolueno_t, String(Tolueno));
     Serial.print("NH4: ");Serial.print(NH4,2);Serial.println(" ppm");
-    publish_data(nh4_t, String(NH4));
     Serial.print("Acetona: ");Serial.print(Acetona,2);Serial.println(" ppm");
-    publish_data(acetona_t, String(Acetona));
-    Serial.println("***************************"); 
+    Serial.println("***************************");
+
+    publish_data(climate_topic, String(h) + "," + String(t) + "," + String(CO) + "," + String(Alcohol) + "," + String(CO2) + "," + String(Tolueno) + "," + String(NH4) + "," +String(Acetona));
+     
     
 
     timeSinceLastRead = 0;
