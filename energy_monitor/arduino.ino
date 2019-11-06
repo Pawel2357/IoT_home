@@ -13,8 +13,6 @@ void setup()
 void loop()
 {
   double Irms = emon1.calcIrms(1480);  // Calculate Irms only
-  
-  Serial.print(Irms*230.0);         // Apparent power
-  Serial.print(" Power_7_ ");
+  Serial.print(String(Irms*230.0) + ",Power_7");         // Apparent power
   delay(5000);
 }
