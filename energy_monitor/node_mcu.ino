@@ -4,8 +4,8 @@
 #include <Wire.h>
 
 // Connect to the WiFi
-const char* ssid = "Dom";
-const char* password = "izabelin";
+const char* ssid = "xyz";
+const char* password = "xyz";
 const char* mqtt_server = "0.0.0.0";
 
 const char* mqtt_client_name = "energy_monitor";
@@ -69,6 +69,5 @@ void loop()
     reconnect();
   }
   client.loop();
-  setup_wifi();
   publish_data();
 }
