@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import paho.mqtt.client as mqtt
 import time
+import numpy as np
 
 broker_IP = "xxx"
 bathroom_topic = "lamp_1"
@@ -89,10 +90,18 @@ def index():
             client.connect(broker_IP, 1883)
             change_color(client, 255, 69, 0, 255, bathroom_topic)
         else:
-            # pass # unknown
-#             with open("/home/pawel2357/3d_printer.txt") as f:
-#                 data = f.readlines()
-            lastline = "Cooming soon :)"
+            with open('/home/pi/climate_data.csv') as csvfile:
+                last10 = list(csvfile)[-10:]
+                temp = []
+                humidity = []
+                print(last10)
+                for row in last10:
+                    x = row.split(",")
+                    temp.append(float(x[2]))
+                    humidity.append(float(x[1][1:]))
+            temp = np.mean(temp)
+            humidity = np.mean(humidity)
+            lastline = "Temperature =" + str(temp) + " Humidity =" + str(humidity)
 #             with open("/home/pawel2357/gps_data_correct.txt") as f:
 #                 data = f.readlines()
             last_car = "Cooming soon :)"
