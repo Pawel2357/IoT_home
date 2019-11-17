@@ -21,8 +21,16 @@ def turn_off():
     time.sleep(2)
 
 while True:
+    with open('/home/pi/climate_data.csv') as csvfile:
+        last10 = list(csvfile)[-10:]
+        humidity = []
+        for row in last10:
+            x = row.split(",")
+            humidity.append(float(x[1][1:]))
+    humidity = np.mean(humidity)
     now = datetime.datetime.now()
-    if now.hour % 3 == 0:
+    time.sleep(25)
+    if now.hour % 2 == 0 and now.minute <= 25 and humidity < 50:
         turn_on()
         time.sleep(10)
     else:
