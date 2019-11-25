@@ -33,7 +33,7 @@ PubSubClient client(espClient);
 int n_r = 255;
 int n_g = 255;
 int n_b = 255;
-int n_i = 255;
+int n_i = 122;
 
 void callback(char* topic, byte* payload, unsigned int length) {
   // get subscribed message char by char
@@ -62,9 +62,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   pixels.setBrightness(n_i);
-  // Fix note: r swipped with g. This is grb diode.
-  pixels.setPixelColor(0, pixels.Color(n_g, n_r, n_b)); // Moderately bright green color.
-  pixels.show(); // This sends the updated pixel color to the hardware.
+  for (int i = 0; i <= NUMPIXELS; i++){
+    // Fix note: r swipped with g. This is grb diode.
+    pixels.setPixelColor(i, pixels.Color(n_g, n_r, n_b)); // Moderately bright green color.
+    pixels.show(); // This sends the updated pixel color to the hardware.
+  }
 }
 
 void setup_wifi() {
@@ -126,6 +128,7 @@ void setup() {
 
 void loop() {
     // Fix note: r swipped with g. This is grb diode.
+    pixels.setBrightness(n_i);
     for (int i = 0; i <= NUMPIXELS; i++){
       pixels.setPixelColor(i, pixels.Color(n_r, n_g, n_b)); // Moderately bright green color.
       pixels.show(); // This sends the updated pixel color to the hardware.
