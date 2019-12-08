@@ -37,6 +37,9 @@ Remark:
 `sudo apt-get install mosquitto-clients`  
 `pip3 install paho-mqtt` 
 
+## Jupyter lab
+`/usr/bin/python3 /home/pawel/.local/bin/jupyter-lab --NotebookApp.token= --ip=0.0.0.0`
+
 ## Useful links
 https://icircuit.net/arduino-connecting-arduino-uno-esp8266/2443  
 https://techtutorialsx.com/2017/04/09/esp8266-connecting-to-mqtt-broker/  
