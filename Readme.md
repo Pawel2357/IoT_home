@@ -40,6 +40,12 @@ Remark:
 ## Jupyter lab
 `/usr/bin/python3 /home/pawel/.local/bin/jupyter-lab --NotebookApp.token= --ip=0.0.0.0`
 
+## Set up no-ip DUC
+- in first step log in to no-ip and create host
+- https://www.noip.com/support/knowledgebase/getting-started-with-no-ip-com/
+- ubuntu https://www.noip.com/support/knowledgebase/installing-the-linux-dynamic-update-client-on-ubuntu/
+
+
 ## Useful links
 https://icircuit.net/arduino-connecting-arduino-uno-esp8266/2443  
 https://techtutorialsx.com/2017/04/09/esp8266-connecting-to-mqtt-broker/  
