@@ -1,23 +1,12 @@
-/**
- * Example for reading temperature and humidity
- * using the DHT22 and ESP8266
- *
- * Copyright (c) 2016 Losant IoT. All rights reserved.
- * https://www.losant.com
- */
-
 #include "DHT.h"
-
-//Include the library
-#include <MQUnifiedsensor.h>
-
-
 
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 
+#define DHTPIN 4     // what digital pin the DHT22 is conected to
+#define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
 
 // Connect to the WiFi
 const char* ssid =        "Dom_2_4";
@@ -26,28 +15,16 @@ const char* mqtt_server = "192.168.1.198";
 char* MQTT_client =       "climate_log";
 char* climate_topic =     "data_climate";
 
-
-
-#define DHTPIN 4     // what digital pin the DHT22 is conected to
-#define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
-
-//Definitions
-#define pin A0 //Analog input 0 of your arduino
-#define type 135 //MQ135
-
 DHT dht(DHTPIN, DHTTYPE);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-//Declare Sensor
-MQUnifiedsensor MQ135(pin, type);
+const int pin_mq_135 = 0; //Analog input 0 of your arduino
+const int pin_mq_2 = 1;
 
-//Variables
-float CO, Alcohol, CO2, Tolueno, NH4, Acetona;
-
+int mq_135_value;
 
 void setup_wifi() {
-
     delay(10);
     // We start by connecting to a WiFi network
     Serial.println();
@@ -67,7 +44,6 @@ void setup_wifi() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 }
-
 
 void reconnect() {
  // Loop until we're reconnected
@@ -89,14 +65,12 @@ void reconnect() {
  }
 }
 
-
 void publish_data(char* topic, String measure)
 {
   client.publish(topic, (char*) measure.c_str());
 }
 
-
-void setup() {
+void setup(){
   Serial.begin(9600);
   Serial.setTimeout(2000);
 
@@ -105,84 +79,43 @@ void setup() {
 
   // Wait for serial to initialize.
   while(!Serial) { }
-
-  Serial.println("Device Started");
-  Serial.println("-------------------------------------");
-  Serial.println("Running DHT!");
-  Serial.println("-------------------------------------");
-  MQ135.inicializar();
-
 }
 
-
 int timeSinceLastRead = 0;
-void loop() {
+
+void loop(){
 
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  
-  // Report every 2 seconds.
+
+    // Report every 2 seconds.
   if(timeSinceLastRead > 20000) {
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     float h = dht.readHumidity();
     // Read temperature as Celsius (the default)
     float t = dht.readTemperature();
-    // Read temperature as Fahrenheit (isFahrenheit = true)
-    float f = dht.readTemperature(true);
+    mq_135_value = analogRead(pin_mq_135);       // read analog input pin 0
+    Serial.print("AirQua=");
+    Serial.print(mq_135_value); //, DEC);               // prints the value read
+    Serial.println(" PPM");
+    delay(100);           
 
     // Check if any reads failed and exit early (to try again).
-    if (isnan(h) || isnan(t) || isnan(f)) {
+    if (isnan(h) || isnan(t) || isnan(mq_135_value)) {
       Serial.println("Failed to read from DHT sensor!");
       timeSinceLastRead = 0;
       return;
     }
 
+  
+                        // wait 100ms for next reading
 
-    // Compute heat index in Fahrenheit (the default)
-    float hif = dht.computeHeatIndex(f, h);
-    // Compute heat index in Celsius (isFahreheit = false)
-    float hic = dht.computeHeatIndex(t, h, false);
-
-    Serial.print("Humidity: ");
-    Serial.print(h);
-    Serial.print(" %\t");
-    Serial.print("Temperature: ");
-    Serial.print(t);
-    Serial.print(" *C ");
-    
-
-
-    MQ135.update();
-
-    CO =  MQ135.readSensor("CO"); // Return CO concentration
-    Alcohol =  MQ135.readSensor("Alcohol"); // Return Alcohol concentration
-    CO2 =  MQ135.readSensor("CO2"); // Return CO2 concentration
-    Tolueno =  MQ135.readSensor("Tolueno"); // Return Tolueno concentration
-    NH4 =  MQ135.readSensor("NH4"); // Return NH4 concentration
-    Acetona =  MQ135.readSensor("Acetona"); // Return Acetona concentration
-
-    Serial.println("***************************");
-    Serial.println("Lectures for MQ-135");
-    Serial.print("Volt: ");Serial.print(MQ135.getVoltage(false));Serial.println(" V"); 
-    Serial.print("R0: ");Serial.print(MQ135.getR0());Serial.println(" Ohm"); 
-    Serial.print("CO: ");Serial.print(CO,2);Serial.println(" ppm");
-    Serial.print("Alcohol: ");Serial.print(Alcohol,2);Serial.println(" ppm");
-    Serial.print("CO2: ");Serial.print(CO2,2);Serial.println(" ppm");
-    Serial.print("Tolueno: ");Serial.print(Tolueno,2);Serial.println(" ppm");
-    Serial.print("NH4: ");Serial.print(NH4,2);Serial.println(" ppm");
-    Serial.print("Acetona: ");Serial.print(Acetona,2);Serial.println(" ppm");
-    Serial.println("***************************");
-
-    publish_data(climate_topic, String(h) + "," + String(t) + "," + String(CO) + "," + String(Alcohol) + "," + String(CO2) + "," + String(Tolueno) + "," + String(NH4) + "," +String(Acetona));
-     
-    
-
+    publish_data(climate_topic, String(h) + "," + String(t) + "," + String(mq_135_value));
     timeSinceLastRead = 0;
   }
   delay(100);
   timeSinceLastRead += 100; 
-  
 }
