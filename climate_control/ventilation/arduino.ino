@@ -4,9 +4,11 @@ const int pin_speed = 11;
 
 void setup() {
   //Serial Begin at 9600 Baud
-  pinMode(pin, OUTPUT);
+  pinMode(pin_power, OUTPUT);
   Serial.begin(9600);
-  digitalWrite(pin, HIGH);
+  digitalWrite(pin_power, HIGH);
+  pinMode(pin_speed, OUTPUT);
+  digitalWrite(pin_speed, HIGH);
 }
 
 void loop() {
