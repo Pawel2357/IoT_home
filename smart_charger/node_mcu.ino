@@ -14,8 +14,16 @@ const char* topic_subscribe = "charging_1";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+uint8_t pin_1 = D0;
+
 void send_to_arduino(char receivedChar){
-  Serial.write(receivedChar);
+  if(receivedChar == '0'){
+    Serial.print("high");
+    digitalWrite(pin_1, LOW);
+  }if(receivedChar == '1'){
+    Serial.print("low");
+    digitalWrite(pin_1, HIGH);
+  }
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -66,6 +74,8 @@ void setup()
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  pinMode(pin_1, OUTPUT);
+  digitalWrite(pin_1, LOW);
 }
 
 
