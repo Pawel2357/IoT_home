@@ -87,10 +87,10 @@ while True:
         send_message("Wire 6 battery on: " + str(soc))
     if temp < temp_min_v and not low_temp:
         low_temp, high_temp = logic()
-        send_message("Low temperature: " + str(soc))
+        send_message("Low temperature: " + str(temp))
     if temp > temp_max_v and not high_temp:
         high_temp, low_temp = logic()
-        send_message("High temperature: " + str(soc))
+        send_message("High temperature: " + str(temp))
     if humidity < humid_low_v and not humid_low:
         humid_low, humid_high = logic()
         send_message("Low humidity: " + str(humidity))
