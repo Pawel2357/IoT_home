@@ -14,15 +14,28 @@ const char* topic_subscribe = "charging_1";
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-uint8_t pin_1 = D0;
+uint8_t pin_0 = D0;
+uint8_t pin_1 = D1;
+uint8_t pin_2 = D2;
+uint8_t pin_3 = D3;
 
 void send_to_arduino(char receivedChar){
   if(receivedChar == '0'){
-    Serial.print("high");
-    digitalWrite(pin_1, LOW);
+    digitalWrite(pin_0, LOW);
   }if(receivedChar == '1'){
-    Serial.print("low");
     digitalWrite(pin_1, HIGH);
+  }if(receivedChar == '2'){
+    digitalWrite(pin_2, HIGH);
+  }if(receivedChar == '3'){
+    digitalWrite(pin_3, HIGH);
+  }if(receivedChar == '4'){
+    digitalWrite(pin_0, HIGH);
+  }if(receivedChar == '5'){
+    digitalWrite(pin_1, HIGH);
+  }if(receivedChar == '6'){
+    digitalWrite(pin_2, HIGH);
+  }if(receivedChar == '7'){
+    digitalWrite(pin_3, HIGH);
   }
 }
 
