@@ -23,11 +23,11 @@ void send_to_arduino(char receivedChar){
   if(receivedChar == '0'){
     digitalWrite(pin_0, LOW);
   }if(receivedChar == '1'){
-    digitalWrite(pin_1, HIGH);
+    digitalWrite(pin_1, LOW);
   }if(receivedChar == '2'){
-    digitalWrite(pin_2, HIGH);
+    digitalWrite(pin_2, LOW);
   }if(receivedChar == '3'){
-    digitalWrite(pin_3, HIGH);
+    digitalWrite(pin_3, LOW);
   }if(receivedChar == '4'){
     digitalWrite(pin_0, HIGH);
   }if(receivedChar == '5'){
