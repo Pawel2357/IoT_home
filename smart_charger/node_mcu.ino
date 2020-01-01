@@ -87,8 +87,14 @@ void setup()
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  pinMode(pin_0, OUTPUT);
+  digitalWrite(pin_0, LOW);
   pinMode(pin_1, OUTPUT);
   digitalWrite(pin_1, LOW);
+  pinMode(pin_2, OUTPUT);
+  digitalWrite(pin_2, LOW);
+  pinMode(pin_3, OUTPUT);
+  digitalWrite(pin_3, LOW);
 }
 
 
