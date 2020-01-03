@@ -142,6 +142,13 @@ void reconnect() {
  }
 }
 
+void turn_off_all(){
+  digitalWrite(pin_0, LOW);
+  digitalWrite(pin_1, LOW);
+  digitalWrite(pin_2, LOW);
+  digitalWrite(pin_3, LOW);
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -149,19 +156,17 @@ void setup()
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
   pinMode(pin_0, OUTPUT);
-  digitalWrite(pin_0, LOW);
   pinMode(pin_1, OUTPUT);
-  digitalWrite(pin_1, LOW);
   pinMode(pin_2, OUTPUT);
-  digitalWrite(pin_2, LOW);
   pinMode(pin_3, OUTPUT);
-  digitalWrite(pin_3, LOW);
+  turn_off_all()
 }
 
 
 void loop()
 {
   if (!client.connected()) {
+    turn_off_all()
     reconnect();
   }
   client.loop();
