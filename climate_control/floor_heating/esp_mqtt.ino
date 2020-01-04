@@ -77,6 +77,7 @@ float measure_voltage() {
 }
 
 void send_to_arduino(char receivedChar){
+  Serial.print(receivedChar);
   if(receivedChar == '0'){
     digitalWrite(pin_0, LOW);
   }if(receivedChar == '1'){
@@ -93,19 +94,6 @@ void send_to_arduino(char receivedChar){
     digitalWrite(pin_2, HIGH);
   }if(receivedChar == '7'){
     digitalWrite(pin_3, HIGH);
-  }
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
- // get subscribed message char by char
- // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
- for (int i=0;i<length;i++) {
-  char receivedChar = (char)payload[i];
-  if(receivedChar == 't'){
-    client.publish(topic_kitchen_floor_temp, String(measure_voltage());
-  }else{
-    send_to_arduino(receivedChar);
-  }
   }
 }
 
@@ -149,6 +137,20 @@ void turn_off_all(){
   digitalWrite(pin_3, LOW);
 }
 
+void callback(char* topic, byte* payload, unsigned int length) {
+ // get subscribed message char by char
+ // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
+ for (int i=0;i<length;i++) {
+  char receivedChar = (char)payload[i];
+  if(receivedChar == 't'){
+    float voltage = measure_voltage();
+    client.publish(topic_kitchen_floor_temp, String(voltage).c_str(), true);
+  }else{
+    send_to_arduino(receivedChar);
+  }
+ }
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -159,14 +161,14 @@ void setup()
   pinMode(pin_1, OUTPUT);
   pinMode(pin_2, OUTPUT);
   pinMode(pin_3, OUTPUT);
-  turn_off_all()
+  turn_off_all();
 }
 
 
 void loop()
 {
   if (!client.connected()) {
-    turn_off_all()
+    turn_off_all();
     reconnect();
   }
   client.loop();
