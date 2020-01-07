@@ -6,12 +6,12 @@ import csv
 
 filename = "/home/pawel/Documents/IoT_home/data/stairs_climate_data.csv"
 broker_ip = "192.168.1.198"
-soc_battery_topic = "climate_stairs"
+topic = "climate_stairs_log"
 
 
 def on_connect(client, userdata, flags, rc):
   print("Connected with result code " + str(rc))
-  client.subscribe(soc_battery_topic)
+  client.subscribe(topic)
 
 
 
