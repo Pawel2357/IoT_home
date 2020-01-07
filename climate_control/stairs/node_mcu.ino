@@ -14,6 +14,7 @@ const char* password =    "xyz";
 const char* mqtt_server = "xyz";
 char* MQTT_client =       "climate_stairs";
 char* climate_topic =     "climate_stairs";
+char* climate_topic_log =     "climate_stairs_log";
 
 DHT dht(DHTPIN, DHTTYPE);
 WiFiClient espClient;
@@ -110,7 +111,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       timeSinceLastRead = 0;
       return;
     }else{
-      publish_data(climate_topic, String(h) + "," + String(t));
+      publish_data(climate_topic_log, String(h) + "," + String(t));
     }
   }else{
     send_to_arduino(receivedChar);
