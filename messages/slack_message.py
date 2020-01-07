@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import slack
 
-client = slack.WebClient(token='xoxp-837260216032-824471975746-887198095136-2852144328356a6de80d22463cbef2ed')
+client = slack.WebClient(token='xyz')
 climate_data_file = '/home/pawel/Documents/IoT_home/data/climate_data.csv'
 soc_data_file = '/home/pawel/Documents/IoT_home/data/soc_data.csv'
 climate_data_stairs_filename = '/home/pawel/Documents/IoT_home/data/stairs_climate_data.csv'
@@ -30,13 +30,16 @@ class Notification:
         if self.last_notification_time is not None:
             now = datetime.datetime.now()
             d_t = now - self.last_notification_time
+            print(d_t.seconds / 60)
             if d_t.seconds / 60 > self.notification_delay:
+                self.last_notification_time = datetime.datetime.now()
                 return True
             else:
                 return False
         else:
             self.last_notification_time = datetime.datetime.now()
             return True
+        
     def reset(self):
         self.last_notification_time = None
         
@@ -109,7 +112,7 @@ while True:
     if soc < soc_low_v and SoC_low.can_notify():
         SoC_low.notify("Low battery charge: " + str(soc))
         SoC_high.reset()
-    if soc > soc_high_v and not SoC_high.can_notify():
+    if soc > soc_high_v and SoC_high.can_notify():
         SoC_high.notify("High battery charge: " + str(soc))
         SoC_low.reset()
     if soc < soc_6_off_v and cable_6_off.can_notify():
@@ -124,10 +127,10 @@ while True:
     if temp > temp_max_v and high_temp.can_notify():
         high_temp.notify("High temperature: " + str(temp))
         low_temp.reset()
-    if humidity < humid_low_v and not humid_low.can_notify():
+    if humidity < humid_low_v and humid_low.can_notify():
         humid_low.notify("Low humidity: " + str(humidity))
         humid_high.reset()
-    if humidity > humid_high_v and not humid_high.can_notify():
+    if humidity > humid_high_v and humid_high.can_notify():
         humid_high.notify("High humidity: " + str(humidity))
         humid_low.reset()
     if humidity_s > condensation_s_humid_v and condensation_stairs_warning.can_notify():
