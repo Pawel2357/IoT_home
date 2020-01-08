@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/pawel/Documents/IoT_home/IoT_home")
+import config as cfg
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import time
@@ -7,9 +10,10 @@ import numpy as np
 
 # This is the Subscriber
 
-broker_ip = "zzz"
-topic = "charging_1"
-charging_time = 20
+broker_ip = cfg.broker_ip
+broker_port = cfg.broker_port
+topic = cfg.topic_charger
+charging_time = cfg.charging_time
 
 now = datetime.datetime.now()
 
@@ -27,8 +31,8 @@ def on_message(client, userdata, msg):
         time.sleep(charging_time * 60)
         publish.single(topic, "0", hostname=broker_ip)
 
-client = mqtt.Client("test_1")
-client.connect(broker_ip, 1883)
+client = mqtt.Client(topic)
+client.connect(broker_ip, broker_port)
 
 client.on_connect = on_connect
 client.on_message = on_message
