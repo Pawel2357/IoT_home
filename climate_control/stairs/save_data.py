@@ -1,12 +1,16 @@
+import sys
+sys.path.append("/home/pawel/Documents/IoT_home/IoT_home")
+import config as cfg
 import paho.mqtt.client as mqtt
 import time
 import csv
 
 # This is the Subscriber
 
-filename = "/home/pawel/Documents/IoT_home/data/stairs_climate_data.csv"
-broker_ip = "192.168.1.198"
-topic = "climate_stairs_log"
+filename = cfg.climate_data_stairs_filename
+broker_ip = cfg.broker_ip
+broker_port = cfg.broker_port
+topic = cfg.topic_stairs_climate
 
 
 def on_connect(client, userdata, flags, rc):
@@ -26,7 +30,7 @@ def on_message(client, userdata, msg):
 
 
 client = mqtt.Client()
-client.connect(broker_ip, 1883)
+client.connect(broker_ip, broker_port)
 
 client.on_connect = on_connect
 client.on_message = on_message
