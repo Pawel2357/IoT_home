@@ -6,6 +6,8 @@
 // Set up gps
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
+const int MPU=0x68; 
+int16_t AcX ,AcY, AcZ, Tmp, GyX, GyY, GyZ;
 static const int RXPin = 13, TXPin = 12;
 static const uint32_t GPSBaud = 9600;
 // The TinyGPS++ object
@@ -13,65 +15,39 @@ TinyGPSPlus gps;
 
 // The serial connection to the GPS device
 SoftwareSerial ss(RXPin, TXPin);
- 
-// Connect to the WiFi
-const char* ssid = "Dom";
-const char* password = "izabelin";
-const char* mqtt_server = "40.121.36.126";
- 
-WiFiClient espClient;
-PubSubClient client(espClient);
 
-void send_to_arduino(char receivedChar){
-  Serial.write(receivedChar);
+
+void send_to_computer(String data){
+  Serial.write(data);
 }
 
- 
-void reconnect() {
- // Loop until we're reconnected
- while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
-   // Attempt to connect
- if (client.connect("ESP8266 Client")) {
-   Serial.println("connected");
-   // ... and subscribe to topic
-   client.subscribe("sensors_3d_printing_room");
- } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
-   // Wait 5 seconds before retrying
-   delay(5000);
-   }
- }
-}
  
 void setup()
 {
+  Wire.begin();
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B); 
+  Wire.write(0);    
+  Wire.endTransmission(true);
   Serial.begin(9600);
-  client.setServer(mqtt_server, 1883);
 }
 
-
-void publish_data(String data)
-{
-    // read the incoming byte:
-    // Serial.print(data);
-    char* cdata = strdup(data.c_str());
-    yield();
-    client.publish("smart_leaf_gps", (char*) cdata);
+void read_6_dof(){
+  Wire.beginTransmission(MPU);
+  Wire.write(0x3B);  
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU,12,true);  
+  AcX=Wire.read()<<8|Wire.read();    
+  AcY=Wire.read()<<8|Wire.read();  
+  AcZ=Wire.read()<<8|Wire.read();  
+  GyX=Wire.read()<<8|Wire.read();  
+  GyY=Wire.read()<<8|Wire.read();  
+  GyZ=Wire.read()<<8|Wire.read(); 
+  data = String(AcX) + "," + String(AcY) + "," + String(AcZ) + "," + String(GyX) + "," + String(GyY) + "," + String(GyZ);
+  send_to_computer(data);
 }
 
-
-void loop()
-{
-  if (!client.connected()) {
-    reconnect();
-  }
-  yield();
-  client.loop();
-  yield();
-  ESP.wdtDisable();
+void read_gps(){
   if (ss.available() > 0){
     yield();
     gps.encode(ss.read());
@@ -79,11 +55,15 @@ void loop()
     if (gps.location.isUpdated()){
       Serial.print("gps ok");
       String data;
-      data = "lat," + String(gps.location.lat(), 8) + ",lon," + String(gps.location.lng(), 8) + ",speed," + String(gps.speed.kmph());
-      yield();
-      publish_data(data);
-      delay(500);
+      data = String(gps.location.lat(), 8) + "," + String(gps.location.lng(), 8) + "," + String(gps.speed.kmph());
+      send_to_computer(data);
+      delay(200);
     }
   }
-  ESP.wdtEnable(1); // TODO: more documentation needed
+}
+
+
+void loop(){
+  read_6_dof();
+  read_gps();
 }
