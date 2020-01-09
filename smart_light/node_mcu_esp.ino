@@ -116,6 +116,9 @@ void setup() {
   // End of trinket special code
 
   pixels.begin(); // This initializes the NeoPixel library.
+  pixels.setPixelColor(0, pixels.Color(n_r, n_g, n_b)); // Turn on light at set up
+  pixels.show(); // This sends the updated pixel color to the hardware.
+  
   Serial.begin(9600);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -123,10 +126,6 @@ void setup() {
 }
 
 void loop() {
-    // Fix note: r swipped with g. This is grb diode.
-    pixels.setPixelColor(0, pixels.Color(n_r, n_g, n_b)); // Moderately bright green color.
-    pixels.show(); // This sends the updated pixel color to the hardware.
-
   if (!client.connected()) {
     reconnect();
   }
