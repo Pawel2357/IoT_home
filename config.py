@@ -5,6 +5,9 @@ broker_port = xyz
 topic_ventilation = "ventilation_living_room"
 # lamps
 topic_lamp_enterance = "lamp_enterance"
+topic_lamp_controller = "smart_lamp_controller"
+topic_lamp_bathroom_1 = "lamp_1"
+topic_lamp_bathroom_2 = "lamp_2"
 # other
 kitchen_floor_heating_topic = "kitchen_floor_heating"
 topic = "charging_1"
