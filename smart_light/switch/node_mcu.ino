@@ -81,7 +81,6 @@ void loop(){
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
   button_1_State = digitalRead(lamp_1);
   button_2_State = digitalRead(lamp_2);
   button_3_State = digitalRead(lamp_3);
