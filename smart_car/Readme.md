@@ -16,3 +16,6 @@ Add command to run script in file `sudo vim /etc/rc.local`
 
 ### Arduino waterproof distance sensor
 - https://www.makerguides.com/jsn-sr04t-arduino-tutorial/
+
+### Line detection
+- https://towardsdatascience.com/line-detection-make-an-autonomous-car-see-road-lines-e3ed984952c
