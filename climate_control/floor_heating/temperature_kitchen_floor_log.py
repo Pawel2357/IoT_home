@@ -1,17 +1,21 @@
+import sys
+sys.path.append("/home/pawel/Documents/IoT_home/IoT_home")
+import config as cfg
 import paho.mqtt.client as mqtt
 import time
 import csv
 
 # This is the Subscriber
 
-filename = "/home/pawel/Documents/IoT_home/data/kitchen_floor_temp_data.csv"
-broker_ip = "192.168.1.198"
-soc_battery_topic = "kitchen_floor_temp"
+filename = cfg.floor_temp_data
+broker_ip = cfg.broker_ip
+broker_port = cfg.broker_port
+topic = cfg.kitchen_floor_temp_log_topic
 
 
 def on_connect(client, userdata, flags, rc):
   print("Connected with result code " + str(rc))
-  client.subscribe(soc_battery_topic)
+  client.subscribe(topic)
 
 
 
@@ -26,7 +30,7 @@ def on_message(client, userdata, msg):
 
 
 client = mqtt.Client()
-client.connect(broker_ip, 1883)
+client.connect(broker_ip, broker_port)
 
 client.on_connect = on_connect
 client.on_message = on_message
