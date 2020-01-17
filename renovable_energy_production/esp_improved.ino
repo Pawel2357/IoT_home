@@ -12,6 +12,8 @@ const char* mqtt_server = "xyz";
 uint16_t sleepSeconds =    120;         // 2 minutes default
 char* MQTT_client =       "home_battery_soc";
 char* data_topic =        "home_battery_soc";
+char* load_control_topic = "renovable_control";
+char* log_topic =          "home_log";
 
 
 WiFiClient espClient;
@@ -150,39 +152,6 @@ void setup_solar_charger() {
     digitalWrite(LED, HIGH);
 }
 
-void setup(){
-    // say hello
-    Serial.begin(115200);
-    while (!Serial) { ; }
-    Serial.println();
-    Serial.println("Hello World! I'm an EpEver Solar Monitor!");
-
-    setup_wifi();
-    client.setServer(mqtt_server, 1883);
-    
-    setup_solar_charger();
-}
-
-void reconnect() {
- // Loop until we're reconnected
- while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
-   yield();
-   // Attempt to connect
- if (client.connect(MQTT_client)) {
-   Serial.println("connected");
-   // ... and subscribe to topic
-   // client.subscribe("lamp_1");
- } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
-   // Wait 5 seconds before retrying
-   delay(5000);
-   }
- }
-}
-
 void get_charger_data() {
 // datastructures, also for buffer to values conversion
   //
@@ -213,7 +182,6 @@ void get_charger_data() {
       int16_t  bV;
       int16_t  bI;
       int32_t  bP;
-      
       
       uint16_t  dummy[4];
       
@@ -459,12 +427,61 @@ void get_charger_data() {
   Serial.print("stats.s.genEnerTotal" + String(stats.s.genEnerTotal));
 }
 
+void callback(char* topic, byte* payload, unsigned int length) {
+ // get subscribed message char by char
+ // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
+ for (int i=0;i<length;i++) {
+  char receivedChar = (char)payload[i];
+  if(receivedChar == 'c'){
+    //float voltage = measure_voltage();
+    // here calculate panel parameters
+    // and publish them
+    client.publish(data_topic, String(voltage).c_str(), true);
+  }else{
+    send_to_arduino(receivedChar);
+  }
+ }
+}
+
+void setup(){
+    // say hello
+    Serial.begin(115200);
+    while (!Serial) { ; }
+    Serial.println();
+    Serial.println("Hello World! I'm an EpEver Solar Monitor!");
+
+    setup_wifi();
+    client.setServer(mqtt_server, 1883);
+    
+    setup_solar_charger();
+}
+
+void reconnect() {
+ // Loop until we're reconnected
+ while (!client.connected()) {
+   Serial.print("Attempting MQTT connection...");
+   yield();
+   // Attempt to connect
+ if (client.connect(MQTT_client)) {
+   Serial.println("connected");
+   // ... and subscribe to topic
+   // client.subscribe("lamp_1");
+ } else {
+   Serial.print("failed, rc=");
+   Serial.print(client.state());
+   Serial.println(" try again in 5 seconds");
+   // Wait 5 seconds before retrying
+   delay(5000);
+   }
+ }
+}
+
 void preTransmission()
 {
   digitalWrite(MAX485_RE, 1);
   digitalWrite(MAX485_DE, 1);
   
-  digitalWrite(LED,LOW);
+  digitalWrite(LED, LOW);
 }
 
 void postTransmission()
