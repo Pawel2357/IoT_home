@@ -14,7 +14,7 @@
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      1
-#define NUMLAMPS       3
+#define NUMLAMPS       1
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -22,11 +22,12 @@
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // Connect to the WiFi
-const char* ssid = "Dom";
+const char* ssid = "Dom_2_4";
 const char* password = "izabelin";
-const char* mqtt_server = "40.121.36.126";
+const char* mqtt_server = "192.168.1.198";
 
-char* topic = "lamp_1";
+const char* topic = "lamp_2";
+const char* log_topic = "home_log";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -67,7 +68,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if(data_type == i){
     n_i = number;
   }
-
+  client.publish(log_topic, "lamp_2,"+ String(n_i) + "," + String(n_r) + "," + String(n_g) + "," + String(n_b));
   pixels.setBrightness(n_i);
   for(int l_nb = 0; l_nb < NUMLAMPS; l_nb++){
     set_color(l_nb, n_r, n_g, n_b);
@@ -100,7 +101,6 @@ void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
    Serial.print("Attempting MQTT connection...");
-   yield();
    // Attempt to connect
  if (client.connect(topic)) {
    Serial.println("connected");
@@ -127,6 +127,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  client.publish(log_topic, "lamp_2,"+ String(n_i) + "," + String(n_r) + "," + String(n_g) + "," + String(n_b));
 }
 
 void loop() {
