@@ -1,6 +1,6 @@
 ## Battery setup
 The battery is made of Nissan leaf modules. Each module is made of 4 cells.  
-Charging characteristic http://hybridautocenter.com/HAC4/index.php?option=com_content&view=article&id=72
+Charging characteristic https://qnovo.com/inside-the-battery-of-a-nissan-leaf/
 
 ## Charger
 Epever AN 20A
