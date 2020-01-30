@@ -14,16 +14,20 @@
 #define PLUS 0xFFA857
 #define MINUS 0xFFE01F
 #define EQ 0xFF906F
+#define FL_PLUS 0xFFB04F
+#define FL_MINUS 0xFF9867
+
 
 // Connect to the WiFi
-const char* ssid = "xyz";
-const char* password = "xyz";
-const char* mqtt_server = "xyz";
+const char* ssid = "Dom_2_4";
+const char* password = "izabelin";
+const char* mqtt_server = "192.168.1.198";
 
 const char* topic_1 = "lamp_1";
 const char* topic_2 = "lamp_2";
 const char* topic_3 = "lamp_3";
 const char* topic_ventilation = "ventilation_living_room";
+const char* charging_topic = "charging_1";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -147,6 +151,12 @@ void loop() {
     if(results.value == EQ){
       Serial.println("off vent");
       off_ventilation();
+    }
+    if(results.value == FL_PLUS){
+      client.publish(charging_topic, "4");
+    }
+    if(results.value == FL_MINUS){
+      client.publish(charging_topic, "0");
     }
   }
   delay(100);
