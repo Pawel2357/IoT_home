@@ -6,9 +6,9 @@
 
 
 // Connect to the WiFi
-const char* ssid =        "xyz";
-const char* password =    "xyz";
-const char* mqtt_server = "xyz";
+const char* ssid =        "Dom_2_4";
+const char* password =    "izabelin";
+const char* mqtt_server = "192.168.1.198";
 uint16_t sleepSeconds =    120;         // 2 minutes default
 char* MQTT_client =       "home_battery_soc";
 char* data_topic =        "home_battery_soc";
@@ -26,6 +26,7 @@ PubSubClient client(espClient);
 #define LED             D4  // for flashing the led - LOW active!
 #define MAX485_DE       D2  // data or
 #define MAX485_RE       D1  //      recv enable
+uint8_t pin_3 = D3;
 
 
 // ModBus Register Locations
@@ -112,6 +113,7 @@ char buf[256];
 int do_update = 0, switch_load = 0;
 bool loadState = true;
 int debug_mode = 0;             // no sleep and mmore updates
+int last_bSOC = 0;
 
 
 void setup_wifi() {
@@ -152,7 +154,9 @@ void setup_solar_charger() {
     digitalWrite(LED, HIGH);
 }
 
-void get_charger_data() {
+
+
+void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
 // datastructures, also for buffer to values conversion
   //
   uint8_t i, result;
@@ -417,14 +421,16 @@ void get_charger_data() {
   Serial.print("batteryCurrent" + String(batteryCurrent));
   Serial.print("live.l.pV" + String(live.l.pV));
   Serial.print("live.l.pI" + String(live.l.pI));
-  Serial.print("live.l.pP" + String(llive.l.pP));
+  Serial.print("live.l.pP" + String(live.l.pP));
   Serial.print("live.l.bV" + String(live.l.bV));
   Serial.print("live.l.bI" + String(live.l.bI));
   Serial.print("live.l.bP" + String(live.l.bP));
-  Serial.print("batteryCurrent" + String(batteryCurrent));
   Serial.print("charger_charging_status[ charger_mode]" + String(charger_charging_status[ charger_mode]));
   Serial.print("stats.s.genEnerDay" + String(stats.s.genEnerDay));
   Serial.print("stats.s.genEnerTotal" + String(stats.s.genEnerTotal));
+  *data = String(batterySOC) + "," + String(batteryCurrent) + "," + String(live.l.pV) + "," + String(live.l.pI) + "," + String(live.l.pP) + "," + String(live.l.bV) + "," + String(live.l.bI) + "," + String(live.l.bP) + "," + String(charger_charging_status[ charger_mode]) + "," + String(stats.s.genEnerDay) + "," + String(stats.s.genEnerTotal);
+  *live_l_bV = String(live.l.bV);
+  *bSOC = String(batterySOC);
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -434,11 +440,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
   char receivedChar = (char)payload[i];
   if(receivedChar == 'c'){
     //float voltage = measure_voltage();
+    String bSOC;
+    String live_l_bV;
+    String data;
+    
+    get_charger_data(&bSOC, &live_l_bV, &data);
     // here calculate panel parameters
     // and publish them
-    client.publish(data_topic, String(voltage).c_str(), true);
-  }else{
-    send_to_arduino(receivedChar);
+    client.publish(data_topic, String(data).c_str(), true);
+  //}else{
+   // send_to_arduino(receivedChar);
   }
  }
 }
@@ -454,6 +465,8 @@ void setup(){
     client.setServer(mqtt_server, 1883);
     
     setup_solar_charger();
+    pinMode(pin_3, OUTPUT);
+    digitalWrite(pin_3, LOW);
 }
 
 void reconnect() {
@@ -499,5 +512,20 @@ void loop(){
       reconnect();
   }
   client.loop();
-  get_charger_data();
-}
+  String bSOC;
+  String live_l_bV;
+  String data;
+  get_charger_data(&bSOC, &live_l_bV, &data);
+  client.publish(data_topic, String(data).c_str(), true);
+  delay(20000);
+  Serial.print("soc");
+  Serial.print(bSOC);
+  float bSOC_average = (last_bSOC + bSOC.toInt()) / 2;
+  //get_charger_data();
+  if(bSOC_average > 35){
+    digitalWrite(pin_3, HIGH);
+  }
+  if(bSOC_average < 30){
+    digitalWrite(pin_3, LOW);
+  }
+  last_bSOC = bSOC.toInt();
