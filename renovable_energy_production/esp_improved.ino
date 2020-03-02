@@ -6,9 +6,9 @@
 
 
 // Connect to the WiFi
-const char* ssid =        "Dom_2_4";
-const char* password =    "izabelin";
-const char* mqtt_server = "192.168.1.198";
+const char* ssid =        "xyz";
+const char* password =    "xyz";
+const char* mqtt_server = "xyz";
 uint16_t sleepSeconds =    120;         // 2 minutes default
 char* MQTT_client =       "home_battery_soc";
 char* data_topic =        "home_battery_soc";
