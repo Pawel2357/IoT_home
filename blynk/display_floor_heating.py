@@ -151,7 +151,7 @@ def auto_ventilation(fast=True):
 def auto_ventilation_night(fast=False):
     aq_lst = []
     was_turned_off = False
-    #last_ventilated_min = 0
+    run_iterations = 0
     while True:
         now = datetime.datetime.now()
         if stop_threads_n:
@@ -159,8 +159,9 @@ def auto_ventilation_night(fast=False):
         else:
             if now.hour > 22 or now.hour < 5:
                 was_turned_off = False
-                if len(aq_lst) > 3 and coef[0][0] < - 1:
-                    aq_float_final, aq_float = is_air_clean(fast=fast)
+                if len(aq_lst) > 3:
+                    if coef[0][0] < - 1:
+                        aq_float_final, aq_float = is_air_clean(fast=fast)
                 else:
                     aq_float_final, aq_float = is_air_clean()
                 if len(aq_lst) < 1:
@@ -170,6 +171,7 @@ def auto_ventilation_night(fast=False):
                     aq_lst.append(aq_float_final)
                     if len(aq_lst) > 4:
                         aq_lst = aq_lst[-4:]
+                run_iterations += 1
 
                 coef = get_regression_coefficient(np.array(aq_lst).reshape(-1, 1), np.array(range(len(aq_lst))).reshape(-1, 1))
                 print("aq_lst", aq_lst)
@@ -180,8 +182,9 @@ def auto_ventilation_night(fast=False):
                     client = mqtt.Client()
                     client.connect(broker_ip, 1883)
                     fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
-                    time.sleep(60 * 60)
+                    time.sleep((45 + run_iterations * 15) * 60)
                     aq_lst = []
+                    run_iterations = 0
             else:
                 # turn off ventilation
                 if not was_turned_off:
@@ -189,6 +192,7 @@ def auto_ventilation_night(fast=False):
                     client.connect(broker_ip, 1883)
                     fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
                     was_turned_off = True
+                run_iterations = 0
                 
         
 # Register Virtual Pins
