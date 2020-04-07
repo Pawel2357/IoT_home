@@ -1,2 +1,2 @@
-### Node mcu PWM control
-- https://www.electronicwings.com/nodemcu/nodemcu-pwm-with-arduino-ide
+### Useful library
+- https://github.com/GiorgioAresu/FanController
