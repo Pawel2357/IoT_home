@@ -1,42 +1,63 @@
-// PWM output @ 25 kHz, only on pins 9 and 10.
-// Output value should be between 0 and 320, inclusive.
-void analogWrite25k(int pin, int value)
+// Include the library
+#include <FanController.h>
+
+// Sensor wire is plugged into port 2 on the Arduino.
+// For a list of available pins on your board,
+// please refer to: https://www.arduino.cc/en/Reference/AttachInterrupt
+#define SENSOR_PIN 2
+
+// Choose a threshold in milliseconds between readings.
+// A smaller value will give more updated results,
+// while a higher value will give more accurate and smooth readings
+#define SENSOR_THRESHOLD 1000
+
+// PWM pin (4th on 4 pin fans)
+#define PWM_PIN 3
+
+// Initialize library
+FanController fan(SENSOR_PIN, SENSOR_THRESHOLD, PWM_PIN);
+
+/*
+   The setup function. We only start the library here
+*/
+void setup(void)
 {
-    switch (pin) {
-        case 9:
-            OCR1A = value;
-            break;
-        case 10:
-            OCR1B = value;
-            break;
-        default:
-            // no other pin will work
-            break;
-    }
+  // start serial port
+  Serial.begin(9600);
+  Serial.println("Fan Controller Library Demo");
+
+  // Start up the library
+  fan.begin();
 }
 
-void setup()
+/*
+   Main function, get and show the temperature
+*/
+void loop(void)
 {
-    // Configure Timer 1 for PWM @ 25 kHz.
-    TCCR1A = 0;           // undo the configuration done by...
-    TCCR1B = 0;           // ...the Arduino core library
-    TCNT1  = 0;           // reset timer
-    TCCR1A = _BV(COM1A1)  // non-inverted PWM on ch. A
-           | _BV(COM1B1)  // same on ch; B
-           | _BV(WGM11);  // mode 10: ph. correct PWM, TOP = ICR1
-    TCCR1B = _BV(WGM13)   // ditto
-           | _BV(CS10);   // prescaler = 1
-    ICR1   = 320;         // TOP = 320
+  // Call fan.getSpeed() to get fan RPM.
+  Serial.print("Current speed: ");
+  unsigned int rpms = fan.getSpeed(); // Send the command to get RPM
+  Serial.print(rpms);
+  Serial.println("RPM");
 
-    // Set the PWM pins as output.
-    pinMode( 9, OUTPUT);
-    pinMode(10, OUTPUT);
-}
+  // Get new speed from Serial (0-100%)
+  // Constrain a 0-100 range
+  byte target = 50;
 
-void loop()
-{
-    // Just an example:
-    analogWrite25k( 9, 88);
-    analogWrite25k(10, 88);
-    for (;;) ;  // infinite loop
+  // Print obtained value
+  Serial.print("Setting duty cycle: ");
+  Serial.println(target, DEC);
+
+  // Set fan duty cycle
+  fan.setDutyCycle(target);
+
+  // Get duty cycle
+  byte dutyCycle = fan.getDutyCycle();
+  Serial.print("Duty cycle: ");
+  Serial.println(dutyCycle, DEC);
+
+  // Not really needed, just avoiding spamming the monitor,
+  // readings will be performed no faster than once every THRESHOLD ms anyway
+  delay(250);
 }
