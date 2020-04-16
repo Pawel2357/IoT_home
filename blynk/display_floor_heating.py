@@ -22,7 +22,7 @@ topic_ventilation_bedroom = "ventilation_bedroom"
 charging_topic = "charging_1"
 stop_threads = False
 
-BLYNK_AUTH = 'xyz'
+BLYNK_AUTH = 'Bo7ol7uuvgx7Gy4uGHQ0j8eVgC_6Za-r'
 blynk = BlynkLib.Blynk(BLYNK_AUTH,
                        server=broker_ip,        # set server address
                        port=8080,                       # set server port
@@ -119,14 +119,15 @@ def get_regression_coefficient(X, y):
         
 def auto_ventilation(fast=True):
     aq_lst = []
+    run_iterations = 0
     while True:
         if stop_threads:
             break
         else:
-            if len(aq_lst) > 3 and coef[0][0] < - 1:
-                aq_float_final, aq_float = is_air_clean(fast=fast)
+            if run_iterations > 3:
+                aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations, fast=fast)
             else:
-                aq_float_final, aq_float = is_air_clean()
+                aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations)
             if len(aq_lst) < 1:
                 aq_lst.append(aq_float)
                 aq_lst.append(aq_float_final)
@@ -147,6 +148,7 @@ def auto_ventilation(fast=True):
                 fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
                 time.sleep(60 * 60)
                 aq_lst = []
+        run_iterations += 1
 
 def auto_ventilation_night(fast=False):
     aq_lst = []
@@ -157,13 +159,12 @@ def auto_ventilation_night(fast=False):
         if stop_threads_n:
             break
         else:
-            if now.hour > 22 or now.hour < 5:
+            if now.hour > 22 or now.hour < 7:
                 was_turned_off = False
-                if len(aq_lst) > 3:
-                    if coef[0][0] < - 1:
-                        aq_float_final, aq_float = is_air_clean(fast=fast)
+                if len(aq_lst) > 3 and coef[0][0] < - 1:
+                    aq_float_final, aq_float = is_air_clean(fast=fast)
                 else:
-                    aq_float_final, aq_float = is_air_clean()
+                    aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations)
                 if len(aq_lst) < 1:
                     aq_lst.append(aq_float)
                     aq_lst.append(aq_float_final)
@@ -172,7 +173,6 @@ def auto_ventilation_night(fast=False):
                     if len(aq_lst) > 4:
                         aq_lst = aq_lst[-4:]
                 run_iterations += 1
-
                 coef = get_regression_coefficient(np.array(aq_lst).reshape(-1, 1), np.array(range(len(aq_lst))).reshape(-1, 1))
                 print("aq_lst", aq_lst)
                 print("coef", coef)
@@ -182,7 +182,7 @@ def auto_ventilation_night(fast=False):
                     client = mqtt.Client()
                     client.connect(broker_ip, 1883)
                     fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
-                    time.sleep((45 + run_iterations * 15) * 60)
+                    time.sleep((45 + run_iterations * 8) * 60)
                     aq_lst = []
                     run_iterations = 0
             else:
