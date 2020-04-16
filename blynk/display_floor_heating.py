@@ -22,7 +22,7 @@ topic_ventilation_bedroom = "ventilation_bedroom"
 charging_topic = "charging_1"
 stop_threads = False
 
-BLYNK_AUTH = 'Bo7ol7uuvgx7Gy4uGHQ0j8eVgC_6Za-r'
+BLYNK_AUTH = 'xyz'
 blynk = BlynkLib.Blynk(BLYNK_AUTH,
                        server=broker_ip,        # set server address
                        port=8080,                       # set server port
