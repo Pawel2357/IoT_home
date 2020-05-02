@@ -22,9 +22,9 @@
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // Connect to the WiFi
-const char* ssid = "Dom_2_4";
-const char* password = "izabelin";
-const char* mqtt_server = "192.168.1.198";
+const char* ssid = "xyz";
+const char* password = "xyz";
+const char* mqtt_server = "xyz";
 
 const char* topic = "lamp_2";
 const char* log_topic = "home_log";
