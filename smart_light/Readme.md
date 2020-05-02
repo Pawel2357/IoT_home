@@ -20,5 +20,9 @@ This repository provides instruction how to build diy multi color smart lamp.
 ### NodeMcu smart light
 - Add separate voltage source to the led
 
+### Software
+- file node_mcu_esp_multiple.ino contains Node mcu code
+- python code to control lamp using blynk is available IoT_home/blynk/control_lights_color_bathroom.py
+
 ### Other useful links
 - Natural light rgb codes http://planetpixelemporium.com/tutorialpages/light.html
