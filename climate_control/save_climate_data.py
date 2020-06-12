@@ -25,10 +25,16 @@ def on_message(client, userdata, msg):
         soc_data_writer.writerow([localtime, data])
 
 
-client = mqtt.Client()
-client.connect(broker_ip, 1883)
+def save_climate_data():
+    client = mqtt.Client()
+    client.connect(broker_ip, 1883)
 
-client.on_connect = on_connect
-client.on_message = on_message
+    client.on_connect = on_connect
+    client.on_message = on_message
 
-client.loop_forever()
+    client.loop_forever()
+    
+
+
+if __name__ == "__main__":
+    save_climate_data()
