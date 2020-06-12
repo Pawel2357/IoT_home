@@ -344,3 +344,16 @@ _thread.start_new_thread(read_aq_bedroom,() )
 global blynk
 while True:
     blynk.run()
+    
+def start():
+    _thread.start_new_thread(read_temperature,() )
+    _thread.start_new_thread(log_temperature,() )
+    _thread.start_new_thread(log_aq_bedroom,() )
+    _thread.start_new_thread(read_aq_bedroom,() )
+
+    global blynk
+    while True:
+        blynk.run()
+        
+start()
+  
