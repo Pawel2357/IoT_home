@@ -136,7 +136,7 @@ void setup()
   digitalWrite(ECGround,LOW);//We can leave the ground connected permanantly
  
   delay(100);// gives sensor time to settle
-  sensors.begin();
+  // sensors.begin();
   delay(100);
   //** Adding Digital Pin Resistance to [25 ohm] to the static Resistor *********//
   // Consule Read-Me for Why, or just accept it as true
@@ -161,7 +161,7 @@ void loop()
 {
   GetEC();          //Calls Code to Go into GetEC() Loop [Below Main Loop] dont call this more that 1/5 hhz [once every five seconds] or you will polarise the water
   PrintReadings();  // Cals Print routine [below main loop]
-  delay(100000);    // 100 s
+  delay(10000);    // 100 s
 }
 //************************************** End Of Main Loop **********************************************************************//
  
@@ -213,7 +213,7 @@ Serial.print(" ppm  ");
 // Serial.print(Temperature);
 // Serial.println(" *C ");
  
- 
+
 /*
 //********** Usued for Debugging ************
 Serial.print("Vdrop: ");
@@ -224,4 +224,5 @@ Serial.print(EC);
 Serial.println("Siemens");
 //********** end of Debugging Prints *********
 */
+
 };
