@@ -1,63 +1,45 @@
-// Include the library
-#include <FanController.h>
+const byte OC1A_PIN = 9;
+const byte OC1B_PIN = 10;
 
-// Sensor wire is plugged into port 2 on the Arduino.
-// For a list of available pins on your board,
-// please refer to: https://www.arduino.cc/en/Reference/AttachInterrupt
-#define SENSOR_PIN 2
+const word PWM_FREQ_HZ = 25000; //Adjust this value to adjust the frequency
+const word TCNT1_TOP = 16000000/(2*PWM_FREQ_HZ);
 
-// Choose a threshold in milliseconds between readings.
-// A smaller value will give more updated results,
-// while a higher value will give more accurate and smooth readings
-#define SENSOR_THRESHOLD 1000
+void setup() {
+  
+  pinMode(OC1A_PIN, OUTPUT);
 
-// PWM pin (4th on 4 pin fans)
-#define PWM_PIN 3
+  // Clear Timer1 control and count registers
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1  = 0;
 
-// Initialize library
-FanController fan(SENSOR_PIN, SENSOR_THRESHOLD, PWM_PIN);
-
-/*
-   The setup function. We only start the library here
-*/
-void setup(void)
-{
-  // start serial port
-  Serial.begin(9600);
-  Serial.println("Fan Controller Library Demo");
-
-  // Start up the library
-  fan.begin();
+  // Set Timer1 configuration
+  // COM1A(1:0) = 0b10   (Output A clear rising/set falling)
+  // COM1B(1:0) = 0b00   (Output B normal operation)
+  // WGM(13:10) = 0b1010 (Phase correct PWM)
+  // ICNC1      = 0b0    (Input capture noise canceler disabled)
+  // ICES1      = 0b0    (Input capture edge select disabled)
+  // CS(12:10)  = 0b001  (Input clock select = clock/1)
+  
+  TCCR1A |= (1 << COM1A1) | (1 << WGM11);
+  TCCR1B |= (1 << WGM13) | (1 << CS10);
+  ICR1 = TCNT1_TOP;
 }
 
-/*
-   Main function, get and show the temperature
-*/
-void loop(void)
-{
-  // Call fan.getSpeed() to get fan RPM.
-  Serial.print("Current speed: ");
-  unsigned int rpms = fan.getSpeed(); // Send the command to get RPM
-  Serial.print(rpms);
-  Serial.println("RPM");
+void loop() {
 
-  // Get new speed from Serial (0-100%)
-  // Constrain a 0-100 range
-  byte target = 50;
+    setPwmDuty(10);
+    //delay(5000);
+    //setPwmDuty(100); //Change this value 0-100 to adjust duty cycle
+    //delay(5000);
+//    setPwmDuty(50);
+//    delay(20000);
+//    setPwmDuty(75);
+//    delay(20000);
+//    setPwmDuty(100);
+//    delay(20000);
+}
 
-  // Print obtained value
-  Serial.print("Setting duty cycle: ");
-  Serial.println(target, DEC);
-
-  // Set fan duty cycle
-  fan.setDutyCycle(target);
-
-  // Get duty cycle
-  byte dutyCycle = fan.getDutyCycle();
-  Serial.print("Duty cycle: ");
-  Serial.println(dutyCycle, DEC);
-
-  // Not really needed, just avoiding spamming the monitor,
-  // readings will be performed no faster than once every THRESHOLD ms anyway
-  delay(250);
+void setPwmDuty(byte duty) {
+  OCR1A = (word) (duty*TCNT1_TOP)/100;
 }
