@@ -1,12 +1,14 @@
-#include "DHT.h"
+#include "DHTesp.h"
 
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 
-#define DHTPIN 4     // what digital pin the DHT22 is conected to
-#define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
+// #define DHTPIN 4     // what digital pin the DHT22 is conected to
+// #define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
+
+DHTesp dht;
 
 // Connect to the WiFi
 const char* ssid =        "Dom_2_4";
@@ -15,7 +17,6 @@ const char* mqtt_server = "192.168.1.198";
 char* MQTT_client =       "climate_log";
 char* climate_topic =     "data_climate";
 
-DHT dht(DHTPIN, DHTTYPE);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -73,6 +74,7 @@ void publish_data(char* topic, String measure)
 void setup(){
   Serial.begin(9600);
   Serial.setTimeout(2000);
+  dht.setup(4, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -81,41 +83,37 @@ void setup(){
   while(!Serial) { }
 }
 
-int timeSinceLastRead = 0;
-
 void loop(){
 
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
+  // dht.setup(4, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
+  // Report every 2 seconds.
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.getHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.getTemperature();
+  Serial.print(t);
+  Serial.print(h);
+  mq_135_value = analogRead(pin_mq_135);       // read analog input pin 0
+  Serial.print("AirQua=");
+  Serial.print(mq_135_value); //, DEC);               // prints the value read
+  Serial.println(" PPM");
+  delay(5000);           
 
-    // Report every 2 seconds.
-  if(timeSinceLastRead > 20000) {
-    // Reading temperature or humidity takes about 250 milliseconds!
-    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    float h = dht.readHumidity();
-    // Read temperature as Celsius (the default)
-    float t = dht.readTemperature();
-    mq_135_value = analogRead(pin_mq_135);       // read analog input pin 0
-    Serial.print("AirQua=");
-    Serial.print(mq_135_value); //, DEC);               // prints the value read
-    Serial.println(" PPM");
-    delay(100);           
-
-    // Check if any reads failed and exit early (to try again).
-    if (isnan(h) || isnan(t) || isnan(mq_135_value)) {
-      Serial.println("Failed to read from DHT sensor!");
-      timeSinceLastRead = 0;
-      return;
-    }
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(mq_135_value)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
 
   
                         // wait 100ms for next reading
 
     publish_data(climate_topic, String(h) + "," + String(t) + "," + String(mq_135_value));
-    timeSinceLastRead = 0;
-  }
+
   delay(100);
-  timeSinceLastRead += 100; 
 }
