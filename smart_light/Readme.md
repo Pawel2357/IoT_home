@@ -26,3 +26,4 @@ This repository provides instruction how to build diy multi color smart lamp.
 
 ### Other useful links
 - Natural light rgb codes http://planetpixelemporium.com/tutorialpages/light.html
+- movement PIR sensor tutorial https://components101.com/hc-sr501-pir-sensor
