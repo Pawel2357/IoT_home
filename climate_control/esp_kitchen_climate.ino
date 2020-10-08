@@ -11,11 +11,12 @@
 DHTesp dht;
 
 // Connect to the WiFi
-const char* ssid =        "Dom_2_4";
-const char* password =    "izabelin";
-const char* mqtt_server = "192.168.1.198";
+const char* ssid =        "xyz";
+const char* password =    "xyz";
+const char* mqtt_server = "xyz";
 char* MQTT_client =       "kitchen_climate";
 char* climate_topic =     "kitchen_climate";
+char* topic_subscribe =   "kitchen_fan";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -44,13 +45,13 @@ void setup_wifi() {
 void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
+   //Serial.print("Attempting MQTT connection...");
    yield();
    // Attempt to connect
  if (client.connect(MQTT_client)) {
    delay(40);
    // ... and subscribe to topic
-   // client.subscribe("lamp_1");
+   client.subscribe(topic_subscribe);
  } else {
    //Serial.print("failed, rc=");
    //Serial.print(client.state());
@@ -82,6 +83,7 @@ void publish_data(char* topic, String measure)
 void setup(){
   Serial.begin(9600);
   Serial.setTimeout(2000);
+  client.setCallback(callback);
   dht.setup(DHTPIN, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
   Serial.print("0");
 
@@ -106,6 +108,6 @@ void loop(){
   float t = dht.getTemperature();
   //Serial.print(t);
   //Serial.print(h);
-  delay(5000);           
+  delay(1000);           
   publish_data(climate_topic, String(h) + "," + String(t));
 }
