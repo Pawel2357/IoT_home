@@ -3,6 +3,8 @@ The battery is made of Nissan leaf modules. Each module is made of 4 cells.
 Charging characteristic https://qnovo.com/inside-the-battery-of-a-nissan-leaf/
 
 ## Charger
+### Epever connection to arduino
+https://www.hackster.io/tekk/cheap-mppt-controller-live-stats-on-mobile-3db5be
 Epever AN 20A
 TO-DO: save configuration of charging profile.
 
