@@ -22,3 +22,6 @@ Add command to run script in file `sudo vim /etc/rc.local`
 
 ### 6 dof arduino tutorial
 - https://github.com/pololu/lsm6-arduino
+
+### GPS arduino
+- https://lastminuteengineers.com/neo6m-gps-arduino-tutorial/
