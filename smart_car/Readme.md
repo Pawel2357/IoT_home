@@ -19,3 +19,6 @@ Add command to run script in file `sudo vim /etc/rc.local`
 
 ### Line detection
 - https://towardsdatascience.com/line-detection-make-an-autonomous-car-see-road-lines-e3ed984952c
+
+### 6 dof arduino tutorial
+- https://github.com/pololu/lsm6-arduino
