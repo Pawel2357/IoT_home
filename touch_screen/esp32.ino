@@ -40,6 +40,7 @@ TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 boolean SwitchOn = false;
 boolean SwitchOn2 = false;
+String messageTemp;
 
 // Comment out to stop drawing black spots
 #define BLACK_SPOT
@@ -228,13 +229,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
  String messageTemp;
+ messageTemp = "";
  for (int i=0;i<length;i++) {
     char receivedChar = (char)payload[i];
     messageTemp += receivedChar;
     Serial.println(receivedChar);
   }
-  tft.fillRect(100, 100, 120, 60, TFT_GREEN);
-  tft.setTextColor(TFT_ORANGE);
+  tft.setTextColor(TFT_RED, TFT_GREEN);
   tft.drawString(messageTemp, 160, 130, 6);
 }
 
