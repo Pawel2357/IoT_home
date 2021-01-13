@@ -40,7 +40,6 @@ TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 boolean SwitchOn = false;
 boolean SwitchOn2 = false;
-String messageTemp;
 
 // Comment out to stop drawing black spots
 #define BLACK_SPOT
@@ -229,12 +228,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
  String messageTemp;
- messageTemp = "";
  for (int i=0;i<length;i++) {
     char receivedChar = (char)payload[i];
     messageTemp += receivedChar;
     Serial.println(receivedChar);
   }
+  //tft.fillRect(100, 100, 120, 60, TFT_GREEN);
   tft.setTextColor(TFT_RED, TFT_GREEN);
   tft.drawString(messageTemp, 160, 130, 6);
 }
@@ -330,7 +329,9 @@ void redBtn()
 void greenBtn()
 {
   tft.fillRect(GREENBUTTON_X, GREENBUTTON_Y, GREENBUTTON_W, GREENBUTTON_H, TFT_GREEN);
+  delay(5);
   tft.fillRect(REDBUTTON_X, REDBUTTON_Y, REDBUTTON_W, REDBUTTON_H, TFT_DARKGREY);
+  delay(5);
   drawFrame();
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(1);
@@ -339,13 +340,13 @@ void greenBtn()
   SwitchOn = true;
 }
 
-
-
 // Draw a red button
 void redBtn2()
 {
   tft.fillRect(REDBUTTON_X2, REDBUTTON_Y2, REDBUTTON_W2, REDBUTTON_H2, TFT_RED);
+  delay(5);
   tft.fillRect(GREENBUTTON_X2, GREENBUTTON_Y2, GREENBUTTON_W2, GREENBUTTON_H2, TFT_DARKGREY);
+  delay(5);
   drawFrame2();
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(1);
@@ -358,7 +359,9 @@ void redBtn2()
 void greenBtn2()
 {
   tft.fillRect(GREENBUTTON_X2, GREENBUTTON_Y2, GREENBUTTON_W2, GREENBUTTON_H2, TFT_GREEN);
+  delay(5);
   tft.fillRect(REDBUTTON_X2, REDBUTTON_Y2, REDBUTTON_W2, REDBUTTON_H2, TFT_DARKGREY);
+  delay(5);
   drawFrame2();
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(1);
