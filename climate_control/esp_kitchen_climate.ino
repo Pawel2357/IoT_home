@@ -18,6 +18,8 @@ char* MQTT_client =       "kitchen_climate";
 char* climate_topic =     "kitchen_climate";
 char* topic_subscribe =   "kitchen_fan";
 
+unsigned long lastStatus = 0;                // counter in example code for connected to Wifi and mqtt broker
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -95,19 +97,22 @@ void setup(){
 }
 
 void loop(){
-  if (!client.connected()) {
-    reconnect();
+  if ((!client.connected()) && (WiFi.status() != WL_CONNECTED)) {
+    setup_wifi();
+  }else{
+    if (!client.connected()){
+      reconnect();
+    }else{
+      if (millis() - lastStatus > 1000) {                            // Start send status every 10 sec (just as an example)
+        float h = dht.getHumidity();
+        // Read temperature as Celsius (the default)
+        float t = dht.getTemperature();
+        //Serial.print(t);
+        //Serial.print(h);           
+        publish_data(climate_topic, String(h) + "," + String(t));                                        //      give control to MQTT to send message to broker
+        lastStatus = millis();                                        //      remember time of last sent status message
+      }
+      client.loop();
+    }
   }
-  client.loop();
-  // dht.setup(4, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
-  // Report every 2 seconds.
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  float h = dht.getHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.getTemperature();
-  //Serial.print(t);
-  //Serial.print(h);
-  delay(1000);           
-  publish_data(climate_topic, String(h) + "," + String(t));
 }
