@@ -8,6 +8,7 @@ void analogWrite25k(int value)
 
 void setup()
 {   
+    Serial.begin(9600);
     TCCR4A = 0;
     TCCR4B = 0;
     TCNT4  = 0;
