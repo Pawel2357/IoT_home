@@ -7,6 +7,7 @@
 
 #define DHTPIN 4     // what digital pin the DHT22 is conected to
 // #define DHTTYPE DHT22   // there are multiple kinds of DHT sensors
+#define FANPIN D6
 
 DHTesp dht;
 
@@ -17,8 +18,7 @@ const char* mqtt_server = "xyz";
 char* MQTT_client =       "kitchen_climate";
 char* climate_topic =     "kitchen_climate";
 char* topic_subscribe =   "kitchen_fan";
-
-unsigned long lastStatus = 0;                // counter in example code for connected to Wifi and mqtt broker
+unsigned long lastStatus = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -28,8 +28,8 @@ void setup_wifi() {
     delay(10);
     // We start by connecting to a WiFi network
     //Serial.println();
-    //Serial.print("Connecting to ");
-    //Serial.println(ssid);
+    // Serial.print("Connecting to ");
+    // Serial.println(ssid);
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
@@ -38,10 +38,18 @@ void setup_wifi() {
         delay(500);
         Serial.print(".");
     }
-    //Serial.println("");
-    //Serial.println("WiFi connected");
-    //Serial.println("IP address: ");
-    //Serial.println(WiFi.localIP());
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+}
+
+void control_fan(int fan_speed){
+  Serial.println("fan speed before");
+  Serial.println(String(fan_speed));
+  Serial.println("fan speed");
+  Serial.print(fan_speed * 113);
+  analogWrite(FANPIN, fan_speed * 113);
 }
 
 void reconnect() {
@@ -64,18 +72,18 @@ void reconnect() {
  }
 }
 
-void send_to_arduino(char receivedChar){
-  Serial.print(receivedChar);
-}
-
 void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
+ String message;
  for (int i=0;i<length;i++) {
-  char receivedChar = (char)payload[i];
-  send_to_arduino(receivedChar);
+  char receivedChar;
+  receivedChar = (char)payload[i];
+  message += receivedChar;
   }
+  control_fan(message.toInt());
 }
+
 
 void publish_data(char* topic, String measure)
 {
@@ -84,35 +92,39 @@ void publish_data(char* topic, String measure)
 
 void setup(){
   Serial.begin(9600);
-  Serial.setTimeout(2000);
+  analogWriteFreq(4000);
   client.setCallback(callback);
   dht.setup(DHTPIN, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
-  Serial.print("0");
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
-
-  // Wait for serial to initialize.
-  while(!Serial) { }
+  analogWrite(FANPIN, 0);
+  //analogWriteFreq(25);
 }
 
-void loop(){
+void loop()
+{ 
   if ((!client.connected()) && (WiFi.status() != WL_CONNECTED)) {
     setup_wifi();
   }else{
     if (!client.connected()){
       reconnect();
     }else{
-      if (millis() - lastStatus > 1000) {                            // Start send status every 10 sec (just as an example)
+      if (millis() - lastStatus > 1000) {
+        lastStatus = millis();
+        // dht.setup(4, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
+        // Report every 2 seconds.
+        // Reading temperature or humidity takes about 250 milliseconds!
+        // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
         float h = dht.getHumidity();
         // Read temperature as Celsius (the default)
         float t = dht.getTemperature();
-        //Serial.print(t);
-        //Serial.print(h);           
-        publish_data(climate_topic, String(h) + "," + String(t));                                        //      give control to MQTT to send message to broker
-        lastStatus = millis();                                        //      remember time of last sent status message
+        Serial.print(t);
+        Serial.print(h);          
+        publish_data(climate_topic, String(h) + "," + String(t));
       }
       client.loop();
     }
   }
+  delay(100);
 }
