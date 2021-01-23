@@ -19,8 +19,6 @@ char* MQTT_client =       "bathroom_climate";
 char* climate_topic =     "bathroom_climate";
 char* topic_subscribe =   "bathroom_fan";
 unsigned long lastStatus = 0;
-unsigned long lastStatusWifi = 0;
-unsigned long lastStatusMqtt = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -51,7 +49,6 @@ void control_fan(int fan_speed){
   Serial.println(String(fan_speed));
   Serial.println("fan speed");
   Serial.print(fan_speed * 113);
-  //analogWriteFreq(25);
   analogWrite(FANPIN, fan_speed * 113);
 }
 
@@ -95,7 +92,7 @@ void publish_data(char* topic, String measure)
 
 void setup(){
   Serial.begin(9600);
-  analogWriteFreq(25);
+  analogWriteFreq(4000);
   client.setCallback(callback);
   dht.setup(DHTPIN, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
 
@@ -122,8 +119,8 @@ void loop()
         float h = dht.getHumidity();
         // Read temperature as Celsius (the default)
         float t = dht.getTemperature();
-        //Serial.print(t);
-        //Serial.print(h);          
+        Serial.print(t);
+        Serial.print(h);          
         publish_data(climate_topic, String(h) + "," + String(t));
       }
       client.loop();
