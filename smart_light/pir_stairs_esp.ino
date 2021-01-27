@@ -3,109 +3,205 @@
 #include <PubSubClient.h>
 #include <Wire.h>
 
-
-int sensor_0 = 13;  // Digital pin D7
-int sensor_1 = 12; // Digital pin D6
-uint8_t pin_lamp = D1;
-
-
 // Connect to the WiFi
-const char* ssid = "xyz";
-const char* password = "xyz";
+const char* ssid =        "xyz";
+const char* password =    "xyz";
 const char* mqtt_server = "xyz";
-
-const char* mqtt_client_name = "lamp_stairs";
-const char* topic_subscribe = "lamp_stairs";
+char* MQTT_client =        "pir_stairs";
+char* lamp_control_topic = "lamp_stairs_control";
+int break_time = 50000;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  // get subscribed message char by char
-  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
-  payload[length] = '\0'; // Make payload a string by NULL terminating it.
-  String val = (char *)payload;
-  int number = val.toInt();
-  // here code for action based on number value
-}
+unsigned long waitCount = 0;                 // counter
+uint8_t conn_stat = 0;                       // Connection status for WiFi and MQTT:
+int inputPin1 = D1;               // choose the input pin (for PIR sensor)
+int inputPin2 = D3;
+int lampPin = D2;
+bool pirState = LOW;             // we start, assuming no motion detected
+bool pirState2 = LOW;             // we start, assuming no motion detected
+int val1 = 0;                    // variable for reading the pin status
+int val2 = 0;                    // variable for reading the pin status
+unsigned long lastStatusLight1 = 0;
+unsigned long lastStatusLight2 = 0;
+unsigned long lastStatusWifi = 0;
+unsigned long lastStatusMqtt = 0;
+char* pir_1_topic =     "pir_stairs_1";
+char* pir_2_topic =     "pir_stairs_2";
+
+const char* Status = "{\"Message\":\"up and running\"}";
 
 void setup_wifi() {
-
     delay(10);
     // We start by connecting to a WiFi network
     Serial.println();
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
-    WiFi.mode(WIFI_STA);
+    //WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    //Serial.println("");
+    //Serial.println("WiFi connected");
+    //Serial.println("IP address: ");
+    //Serial.println(WiFi.localIP());
 }
 
 void reconnect() {
  // Loop until we're reconnected
- while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
-   yield();
    // Attempt to connect
- if (client.connect(mqtt_client_name)) {
+ if (client.connect(MQTT_client)) {
    Serial.println("connected");
    // ... and subscribe to topic
-   client.subscribe(topic_subscribe);
- } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
-   // Wait 5 seconds before retrying
-   delay(5000);
-   }
+   // client.subscribe("lamp_1");
  }
 }
 
-void setup() {
-
-  pinMode(sensor_0, INPUT);   // declare sensor as input
-  pinMode(sensor_1, INPUT);   // declare sensor as input
-  pinMode(pin_lamp, OUTPUT);
-  digitalWrite(pin_lamp, LOW);  // turn on light for 35 sec
-  // Wait 35 seconds
-  delay(35000);
-  digitalWrite(pin_lamp, HIGH);  // turn on light for 5 sec
-  
-  Serial.begin(9600);
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+void publish_data(char* topic, String measure)
+{
+  client.publish(topic, (char*) measure.c_str());
 }
 
-void loop() {
-    long state_0 = digitalRead(sensor_0);
-    long state_1 = digitalRead(sensor_1);
-    
-    if(state_0 == HIGH || state_1 == HIGH) {
-      Serial.println("Motion detected!");
-      digitalWrite(pin_lamp, LOW);  // turn on light for 35 sec
-      delay(35000);
+void notify_pir_1(){
+  val1 = digitalRead(inputPin1);  // read input value
+  if (val1 == HIGH){            // check if the input is HIGH
+    if (pirState == LOW) {
+      Serial.print("motion_start_1");
+      publish_data(pir_1_topic, String("motion_start_1"));
+      pirState = HIGH;
     }
-    else {
-      digitalWrite(pin_lamp, HIGH);  // turn off light for 5 sec
-      Serial.println("Motion absent!");
-      delay(500);
+  }else{
+    if (pirState == HIGH) {
+      Serial.print("motion_end_1");
+      publish_data(pir_1_topic, String("motion_end_1"));
+      pirState = LOW;
+      }
     }
-    // Fix note: r swipped with g. This is grb diode.
+}
+  
 
+void notify_pir_2(){
+  val2 = digitalRead(inputPin2);  // read input value
+  if (val2 == HIGH){            // check if the input is HIGH
+    if (pirState2 == LOW) {
+      Serial.print("motion_start_2");
+      publish_data(pir_2_topic, String("motion_start_2"));
+      pirState2 = HIGH;
+    }
+  }else{
+    if (pirState2 == HIGH) {
+      Serial.print("motion_end_2");
+      publish_data(pir_2_topic, String("motion_end_2"));
+      pirState2 = LOW;
+      }
+    }
+}
 
-  if (!client.connected()) {
-    reconnect();
+void control_lamp_2(){
+  val2 = digitalRead(inputPin2);  // read input value
+  if (val2 == HIGH){            // check if the input is HIGH
+    lastStatusLight2 = millis();
+    digitalWrite(lampPin, LOW); // turn lamp on
+    }
+  else{
+    if ((millis() - lastStatusLight2 > break_time) && (millis() - lastStatusLight1 > break_time)) {
+      digitalWrite(lampPin, HIGH); // turn lamp off
+      }
+    }
   }
-  client.loop();
+
+void control_lamp_1(){
+  val1 = digitalRead(inputPin1);  // read input value
+  if (val1 == HIGH){            // check if the input is HIGH
+    lastStatusLight1 = millis();
+    digitalWrite(lampPin, LOW); // turn lamp on
+    }
+  else{
+    if ((millis() - lastStatusLight2 > break_time) && (millis() - lastStatusLight1 > break_time)) {
+      digitalWrite(lampPin, HIGH); // turn lamp off
+      }
+    }
+  }
+
+void control_lamp_mqtt(String message){
+  Serial.print(message);
+  if(message=="1"){
+    digitalWrite(lampPin, LOW); // turn lamp on
+    lastStatusLight1 = millis();
+  }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  // get subscribed message char by char
+  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
+  String message;
+  for (int i=0;i<length;i++) {
+    char receivedChar;
+    receivedChar = (char)payload[i];
+    message += receivedChar;
+  }
+  control_lamp_mqtt(message);
+}
+ 
+void setup() {
+  Serial.begin(9600);
+  Serial.setTimeout(2000);
+  pinMode(inputPin1, INPUT);     // declare sensor as input
+  pinMode(inputPin2, INPUT);     // declare sensor as input
+  pinMode(lampPin, OUTPUT);
+  digitalWrite(lampPin, HIGH);
+  Serial.begin(9600);
+  
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+}
+ 
+void loop() {                                                     // with current code runs roughly 400 times per second
+// start of non-blocking connection setup section
+  if ((WiFi.status() != WL_CONNECTED) && (conn_stat != 1)) { conn_stat = 0; }
+  if ((WiFi.status() == WL_CONNECTED) && !client.connected() && (conn_stat != 3))  { conn_stat = 2; }
+  if ((WiFi.status() == WL_CONNECTED) && client.connected() && (conn_stat != 5)) { conn_stat = 4;}
+  switch (conn_stat) {
+    case 0:                                                       // MQTT and WiFi down: start WiFi
+      Serial.println("MQTT and WiFi down: start WiFi");
+      setup_wifi();
+      conn_stat = 1;
+      break;
+    case 1:                                                       // WiFi starting, do nothing here
+      Serial.println("WiFi starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 2:                                                       // WiFi up, MQTT down: start MQTT
+      Serial.println("WiFi up, MQTT down: start MQTT");
+      reconnect();
+      conn_stat = 3;
+      waitCount = 0;
+      break;
+    case 3:                                                       // WiFi up, MQTT starting, do nothing here
+      Serial.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 4:                                                       // WiFi up, MQTT up: finish MQTT configuration
+      Serial.println("WiFi up, MQTT up: finish MQTT configuration");
+      //mqttClient.subscribe(output_topic);
+      //mqttClient.publish(input_topic, Version);
+      conn_stat = 5;                    
+      break;
+  }
+// end of non-blocking connection setup section
+
+// start section with tasks where WiFi/MQTT is required
+  if (conn_stat == 5) {
+    notify_pir_1();
+    notify_pir_2();                                     
+    client.loop();                                              // internal household function for MQTT
+  } 
+// end of section for tasks where WiFi/MQTT are required
+
+// start section for tasks which should run regardless of WiFi/MQTT
+  control_lamp_1();
+  control_lamp_2();
+  delay(100);
+// end of section for tasks which should run regardless of WiFi/MQTT
 }
