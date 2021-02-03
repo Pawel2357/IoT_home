@@ -16,7 +16,7 @@
 
 #include <TFT_eSPI.h> // Hardware-specific library
 
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
 // Replace the next variables with your SSID/Password combination
@@ -29,13 +29,13 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 unsigned long waitCount = 0;                 // counter
-uint8_t conn_stat = 0;                       // Connection status for WiFi and MQTT:
+uint8_t conn_stat = 0;                       // Connection status for WiFi and MQTT:                    
 
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 // This is the file name used to store the touch coordinate
 // calibration data. Cahnge the name to start a new calibration.
-#define CALIBRATION_FILE "/TouchCalData6"
+#define CALIBRATION_FILE "/TouchCalData5"
 
 // Set REPEAT_CAL to true instead of false to run calibration
 // again, otherwise it will only be done once.
@@ -80,6 +80,8 @@ boolean SwitchOn2 = false;
 #define GREENBUTTON_W2 (FRAME_W/2)
 #define GREENBUTTON_H2 FRAME_H
 
+float target_temp = 20.0;
+String messageTemp = "19.5";
 
 //------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
@@ -88,18 +90,22 @@ void setup(void)
   Serial.begin(9600);
   WiFi.mode(WIFI_STA);
   tft.init();
-  tft.fillScreen(TFT_GREEN);
-  // Set the rotation before we calibrate
-  tft.setRotation(1);
+  tft.setRotation(1);  
 
   // call screen calibration
   touch_calibrate();
 
   // clear screen
-
+  tft.fillScreen(TFT_GREEN);
+  // Set the rotation before we calibrate
   // Draw button (this example does not use library Button class)
   redBtn();
   redBtn2();
+  //tft.setFreeFont(FSB9);
+  //tft.setTextSize(2);
+  //tft.setTextColor(TFT_RED, TFT_GREEN);
+  //tft.setCursor(5, 5);
+  //tft.println("Temperatura: ", int(tft.width() / 4 + 10), 110, 2);
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 }
@@ -114,25 +120,31 @@ void loop()
   switch (conn_stat) {
     case 0:                                                       // MQTT and WiFi down: start WiFi
       Serial.println("MQTT and WiFi down: start WiFi");
+      //tft.println("MQTT and WiFi down: start WiFi");
       setup_wifi();
       conn_stat = 1;
       break;
     case 1:                                                       // WiFi starting, do nothing here
       Serial.println("WiFi starting, wait : "+ String(waitCount));
+      //tft.println("WiFi starting, wait : "+ String(waitCount));
       waitCount++;
       break;
     case 2:                                                       // WiFi up, MQTT down: start MQTT
       Serial.println("WiFi up, MQTT down: start MQTT");
+      //tft.println("WiFi up, MQTT down: start MQTT");
       reconnect();
       conn_stat = 3;
       waitCount = 0;
       break;
     case 3:                                                       // WiFi up, MQTT starting, do nothing here
       Serial.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
+      //tft.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
       waitCount++;
       break;
     case 4:                                                       // WiFi up, MQTT up: finish MQTT configuration
       Serial.println("WiFi up, MQTT up: finish MQTT configuration");
+      //tft.println("WiFi up, MQTT up: finish MQTT configuration");
+      delay(5);
       client.subscribe("Touch_screen_temp");
       //mqttClient.publish(input_topic, Version);
       conn_stat = 5;                    
@@ -143,16 +155,15 @@ void loop()
 // start section with tasks where WiFi/MQTT is required
   if (conn_stat == 5) {
     client.loop();
-      
     uint16_t x, y;
   
     // See if there's any touch data for us
     if (tft.getTouch(&x, &y))
     {
       // Draw a block spot to show where touch was calculated to be
-      //#ifdef BLACK_SPOT
-      //  tft.fillCircle(x, y, 2, TFT_BLACK);
-      //#endif
+      #ifdef BLACK_SPOT
+        tft.fillCircle(x, y, 2, TFT_BLACK);
+      #endif
       
       if (SwitchOn)
       {
@@ -208,7 +219,7 @@ void loop()
   
       Serial.println(SwitchOn);
     }
-  }
+  } 
   // start section for tasks which should run regardless of WiFi/MQTT
   delay(100);
   // end of section for tasks which should run regardless of WiFi/MQTT
@@ -252,15 +263,22 @@ void set_color(int i, int r, int g, int b, const char* topic) {
 void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
- String messageTemp;
+ String mqttTemp;
  for (int i=0;i<length;i++) {
     char receivedChar = (char)payload[i];
-    messageTemp += receivedChar;
+    mqttTemp += receivedChar;
     Serial.println(receivedChar);
   }
-  //tft.fillRect(100, 100, 120, 60, TFT_GREEN);
+  messageTemp = mqttTemp;
+
   tft.setTextColor(TFT_RED, TFT_GREEN);
-  tft.drawString(messageTemp, 160, 130, 6);
+  tft.setTextSize(2);
+  tft.setTextFont(2);
+  tft.setCursor(5, 100);
+  tft.println("Temp cel: " + String(target_temp));
+  tft.println("Temperatura: " + messageTemp);
+
+  
 }
 
 void touch_calibrate()
