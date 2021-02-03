@@ -174,6 +174,48 @@
 // On NodeMCU V3  S0 =MISO, S1 =MOSI, S2 =SCLK
 // In ESP8266 overlap mode the following must be defined
 
+
+
+
+/*
+wemos_D1_R2_header_pins.h
+Assignment of Wemos D1 R2 Header Pins (board in Arduino UNO layout)
+and the esp8266's GPIOs
+*/
+
+// UNO header pin and corresponding GPIO of the esp8266
+#define UNO_D0 3 // Rx
+#define UNO_D1 1 // Tx
+#define UNO_D2 16 // -
+#define UNO_D3 5 // SCL
+#define UNO_D4 4 // SDA
+#define UNO_D5 14 // SCK
+#define UNO_D6 12 // MISO
+#define UNO_D7 13 // MOSI
+
+#define UNO_D8 0 // -
+#define UNO_D9 2 // Tx1
+#define UNO_D10 15 // SS
+#define UNO_D11 13 // MOSI
+#define UNO_D12 12 // MISO
+#define UNO_D13 14 // SCK
+//#define UNO_D14 // (GND)
+//#define UNO_D15 // (n.c.)
+#define UNO_D16 4 // SDA
+#define UNO_D17 5 // SCL
+
+#define SUPPORT_TRANSACTIONS
+
+#define TFT_CS UNO_D10 // (= GPIO15 = SS) TFT Chip Select control pin
+#define TFT_DC UNO_D8 // (= GPIO0) Data/Command control pin
+#define TFT_RST UNO_D9 // (= GPIO2) Reset pin
+
+#define TOUCH_CS UNO_D4 // (= GPIO4 = SDA) Chip select pin (T_CS) of touch screen
+
+
+
+
+
 //#define TFT_SPI_OVERLAP
 
 // In ESP8266 overlap mode the TFT chip select MUST connect to pin D3
@@ -182,12 +224,12 @@
 //#define TFT_RST  PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
 //#define TFT_RST  -1  // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
 
-
 // ###### EDIT THE PIN NUMBERS IN THE LINES FOLLOWING TO SUIT YOUR ESP32 SETUP   ######
 
 // For ESP32 Dev board (only tested with ILI9341 display)
 // The hardware SPI can be mapped to any pins
 
+/*
 #define TFT_MISO 19
 #define TFT_MOSI 23
 #define TFT_SCLK 18
@@ -197,6 +239,7 @@
 //#define TFT_RST  -1  // Set TFT_RST to -1 if display RESET is connected to ESP32 board RST
 
 #define TOUCH_CS 21     // Chip select pin (T_CS) of touch screen
+*/
 
 //#define TFT_WR 22    // Write strobe for modified Raspberry Pi TFT only
 
@@ -305,8 +348,8 @@
 // #define SPI_FREQUENCY   1000000
 // #define SPI_FREQUENCY   5000000
 // #define SPI_FREQUENCY  10000000
-// #define SPI_FREQUENCY  20000000
-#define SPI_FREQUENCY  27000000
+#define SPI_FREQUENCY  20000000
+// #define SPI_FREQUENCY  27000000
 // #define SPI_FREQUENCY  40000000
 // #define SPI_FREQUENCY  55000000 // STM32 SPI1 only (SPI2 maximum is 27MHz)
 // #define SPI_FREQUENCY  80000000
