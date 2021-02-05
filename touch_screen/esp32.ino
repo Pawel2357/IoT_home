@@ -80,8 +80,39 @@ boolean SwitchOn2 = false;
 #define GREENBUTTON_W2 (FRAME_W/2)
 #define GREENBUTTON_H2 FRAME_H
 
+
+
+
+/*// Keypad start position, key sizes and spacing
+#define KEY_X 200 // Center of key
+#define KEY_Y 30
+#define KEY_W 35 // Width and height
+#define KEY_H 30 */
+#define KEY_TEXTSIZE 1 // Font size multiplier
+
+// Using two fonts since numbers are nice when bold
+#define LABEL1_FONT &FreeSansOblique12pt7b // Key label font 1
+
+// Create Signal Button
+
+
+// Invoke the TFT_eSPI button class and create all the button objects
+TFT_eSPI_Button key_plus;
+TFT_eSPI_Button key_minus;
+TFT_eSPI_Button key_set_auto;
+TFT_eSPI_Button key_climate_go_to_menu;
+TFT_eSPI_Button key_climate;
+
 float target_temp = 20.0;
-String messageTemp = "19.5";
+String messageTemp = "-";
+String messageHumid = "-";
+String messageAir = "-";
+String messageTemp_k = "-";
+String messageTemp_b = "-";
+String messageHumid_k = "-";
+String messageHumid_b = "-";
+
+String screen_mode = "climate"; // possible modes main_menu, cimate, solar, lights, other, (energy)
 
 //------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
@@ -97,10 +128,28 @@ void setup(void)
 
   // clear screen
   tft.fillScreen(TFT_GREEN);
+  tft.setFreeFont(LABEL1_FONT);
+  tft.setTextSize(1);
+  tft.setTextFont(1);
+  tft.setTextColor(TFT_RED, TFT_GREEN);
   // Set the rotation before we calibrate
   // Draw button (this example does not use library Button class)
-  redBtn();
+/*  redBtn();
   redBtn2();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_plus.initButton(&tft, 200, 30, 35, 30, TFT_WHITE, TFT_RED, TFT_WHITE, "+", KEY_TEXTSIZE); 
+  key_plus.drawButton();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_minus.initButton(&tft, 240, 30, 35, 30, TFT_WHITE, TFT_BLUE, TFT_WHITE, "-", KEY_TEXTSIZE); 
+  key_minus.drawButton();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_set_auto.initButton(&tft, 200, 65, 35, 30, TFT_WHITE, TFT_YELLOW, TFT_WHITE, "set", KEY_TEXTSIZE); 
+  key_set_auto.drawButton();
+  */
+  
   //tft.setFreeFont(FSB9);
   //tft.setTextSize(2);
   //tft.setTextColor(TFT_RED, TFT_GREEN);
@@ -120,33 +169,45 @@ void loop()
   switch (conn_stat) {
     case 0:                                                       // MQTT and WiFi down: start WiFi
       Serial.println("MQTT and WiFi down: start WiFi");
-      //tft.println("MQTT and WiFi down: start WiFi");
+      tft.setCursor(5, 5);
+      tft.println("MQTT and WiFi down: start WiFi");
       setup_wifi();
       conn_stat = 1;
       break;
     case 1:                                                       // WiFi starting, do nothing here
       Serial.println("WiFi starting, wait : "+ String(waitCount));
-      //tft.println("WiFi starting, wait : "+ String(waitCount));
+      tft.setCursor(5, 5);
+      tft.println("WiFi starting, wait : "+ String(waitCount));
       waitCount++;
       break;
     case 2:                                                       // WiFi up, MQTT down: start MQTT
       Serial.println("WiFi up, MQTT down: start MQTT");
-      //tft.println("WiFi up, MQTT down: start MQTT");
+      tft.setCursor(5, 5);
+      tft.println("WiFi up, MQTT down: start MQTT");
       reconnect();
       conn_stat = 3;
       waitCount = 0;
       break;
     case 3:                                                       // WiFi up, MQTT starting, do nothing here
       Serial.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
-      //tft.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
+      tft.setCursor(5, 5);
+      tft.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
       waitCount++;
       break;
     case 4:                                                       // WiFi up, MQTT up: finish MQTT configuration
       Serial.println("WiFi up, MQTT up: finish MQTT configuration");
-      //tft.println("WiFi up, MQTT up: finish MQTT configuration");
+      tft.setCursor(5, 5);
+      tft.println("WiFi up, MQTT up: finish MQTT configuration");
       delay(5);
       client.subscribe("Touch_screen_temp");
+      client.subscribe("Touch_screen_humid");
+      client.subscribe("Touch_screen_air");
+      client.subscribe("Touch_screen_k_temp");
+      client.subscribe("Touch_screen_k_humid");
+      client.subscribe("Touch_screen_b_temp");
+      client.subscribe("Touch_screen_b_humid");
       //mqttClient.publish(input_topic, Version);
+      initialize_climate_menu();
       conn_stat = 5;                    
       break;
   }
@@ -161,61 +222,16 @@ void loop()
     if (tft.getTouch(&x, &y))
     {
       // Draw a block spot to show where touch was calculated to be
-      #ifdef BLACK_SPOT
-        tft.fillCircle(x, y, 2, TFT_BLACK);
-      #endif
-      
-      if (SwitchOn)
-      {
-        if ((x > REDBUTTON_X) && (x < (REDBUTTON_X + REDBUTTON_W))) {
-          if ((y > REDBUTTON_Y) && (y <= (REDBUTTON_Y + REDBUTTON_H))) {
-            Serial.println("ventilation on");
-            redBtn();
-            client.publish("ventilation_living_room", "4");
-            delay(100);
-            client.publish("ventilation_living_room", "5");
-            client.loop();
-          }
-        }
+      //#ifdef BLACK_SPOT
+      //  tft.fillCircle(x, y, 2, TFT_BLACK);
+      //#endif
+      if(screen_mode == "climate"){
+        climate_mode(x, y);
       }
-      else //Record is off (SwitchOn == false)
-      {
-        if ((x > GREENBUTTON_X) && (x < (GREENBUTTON_X + GREENBUTTON_W))) {
-          if ((y > GREENBUTTON_Y) && (y <= (GREENBUTTON_Y + GREENBUTTON_H))) {
-            Serial.println("Green btn hit");
-            greenBtn();
-            client.publish("ventilation_living_room", "0");
-            delay(100);
-            client.publish("ventilation_living_room", "1");
-            client.loop();
-          }
-        }
+      if(screen_mode == "menu"){
+        menu_mode(x, y);
       }
-      if (SwitchOn2)
-      {
-        if ((x > REDBUTTON_X2) && (x < (REDBUTTON_X2 + REDBUTTON_W2))) {
-          if ((y > REDBUTTON_Y2) && (y <= (REDBUTTON_Y2 + REDBUTTON_H2))) {
-            Serial.println("Red btn hit");
-            const char* topic = "led_kitchen";
-            set_color(0, 255, 0, 0, topic);
-            client.loop();
-            delay(100);
-            redBtn2();
-          }
-        }
-      }
-      else
-      {
-        if ((x > GREENBUTTON_X2) && (x < (GREENBUTTON_X2 + GREENBUTTON_W2))) {
-          if ((y > GREENBUTTON_Y2) && (y <= (GREENBUTTON_Y2 + GREENBUTTON_H2))) {
-            Serial.println("Green btn hit");
-            const char* topic = "led_kitchen";
-            set_color(170, 255, 0, 0, topic);
-            client.loop();
-            greenBtn2();
-          }
-        }
-      }
+
   
       Serial.println(SwitchOn);
     }
@@ -223,6 +239,129 @@ void loop()
   // start section for tasks which should run regardless of WiFi/MQTT
   delay(100);
   // end of section for tasks which should run regardless of WiFi/MQTT
+}
+
+void initialize_climate_menu(){
+  tft.fillScreen(TFT_GREEN);
+  tft.setFreeFont(LABEL1_FONT);
+  tft.setTextSize(1);
+  tft.setTextFont(1);
+  tft.setTextColor(TFT_RED, TFT_GREEN);
+  // Set the rotation before we calibrate
+  // Draw button (this example does not use library Button class)
+  redBtn();
+  redBtn2();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_plus.initButton(&tft, 200, 30, 35, 30, TFT_WHITE, TFT_RED, TFT_WHITE, "+", KEY_TEXTSIZE); 
+  key_plus.drawButton();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_minus.initButton(&tft, 240, 30, 35, 30, TFT_WHITE, TFT_BLUE, TFT_WHITE, "-", KEY_TEXTSIZE); 
+  key_minus.drawButton();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_set_auto.initButton(&tft, 200, 65, 35, 30, TFT_WHITE, TFT_YELLOW, TFT_WHITE, "set", KEY_TEXTSIZE); 
+  key_set_auto.drawButton();
+
+  tft.setFreeFont(LABEL1_FONT);
+  key_climate_go_to_menu.initButton(&tft, 280, 65, 40, 30, TFT_WHITE, TFT_BLACK, TFT_WHITE, "menu", KEY_TEXTSIZE); 
+  key_climate_go_to_menu.drawButton();
+}
+
+void initialize_main_menu(){
+  tft.fillScreen(TFT_BLACK);
+  tft.setFreeFont(LABEL1_FONT);
+  key_climate.initButton(&tft, 40, 65, 65, 50, TFT_WHITE, TFT_GREEN, TFT_WHITE, "climate", KEY_TEXTSIZE); 
+  key_climate.drawButton();
+}
+
+void menu_mode(uint16_t x, uint16_t y){
+  if (key_climate.contains(x, y)) {
+    key_climate.press(true); // tell the button it is pressed
+    Serial.println("TRUE");
+    initialize_climate_menu();
+    screen_mode = "climate";
+  }
+}
+
+void climate_mode(uint16_t x, uint16_t y){
+  if (key_climate_go_to_menu.contains(x, y)) {
+    key_climate_go_to_menu.press(true); // tell the button it is pressed
+    initialize_main_menu();
+    screen_mode = "menu";
+  }
+  if (key_plus.contains(x, y)) {
+    key_plus.press(true); // tell the button it is pressed
+    Serial.println("TRUE");
+    target_temp += 0.1;
+    display_temp();
+    tft.fillCircle(240, 65, 15, TFT_GREEN);
+  }
+  if (key_minus.contains(x, y)) {
+    key_minus.press(true); // tell the button it is pressed
+    Serial.println("TRUE");
+    target_temp -= 0.1;
+    display_temp();
+    tft.fillCircle(240, 65, 15, TFT_GREEN);
+  }
+  if (key_set_auto.contains(x, y)) {
+    key_set_auto.press(true); // tell the button it is pressed
+    tft.fillCircle(240, 65, 15, TFT_RED);
+    client.publish("display_auto_temp", (String(target_temp)).c_str());
+  }
+  
+  if (SwitchOn)
+  {
+    if ((x > REDBUTTON_X) && (x < (REDBUTTON_X + REDBUTTON_W))) {
+      if ((y > REDBUTTON_Y) && (y <= (REDBUTTON_Y + REDBUTTON_H))) {
+        Serial.println("ventilation on");
+        redBtn();
+        client.publish("ventilation_living_room", "4");
+        delay(100);
+        client.publish("ventilation_living_room", "5");
+        client.loop();
+      }
+    }
+  }
+  else //Record is off (SwitchOn == false)
+  {
+    if ((x > GREENBUTTON_X) && (x < (GREENBUTTON_X + GREENBUTTON_W))) {
+      if ((y > GREENBUTTON_Y) && (y <= (GREENBUTTON_Y + GREENBUTTON_H))) {
+        Serial.println("Green btn hit");
+        greenBtn();
+        client.publish("ventilation_living_room", "0");
+        delay(100);
+        client.publish("ventilation_living_room", "1");
+        client.loop();
+      }
+    }
+  }
+  if (SwitchOn2)
+  {
+    if ((x > REDBUTTON_X2) && (x < (REDBUTTON_X2 + REDBUTTON_W2))) {
+      if ((y > REDBUTTON_Y2) && (y <= (REDBUTTON_Y2 + REDBUTTON_H2))) {
+        Serial.println("Red btn hit");
+        const char* topic = "led_kitchen";
+        set_color(0, 116, 157, 0, topic);
+        client.loop();
+        delay(100);
+        redBtn2();
+      }
+    }
+  }
+  else
+  {
+    if ((x > GREENBUTTON_X2) && (x < (GREENBUTTON_X2 + GREENBUTTON_W2))) {
+      if ((y > GREENBUTTON_Y2) && (y <= (GREENBUTTON_Y2 + GREENBUTTON_H2))) {
+        Serial.println("Green btn hit");
+        const char* topic = "led_kitchen";
+        set_color(170, 116, 157, 0, topic);
+        client.loop();
+        greenBtn2();
+      }
+    }
+  }
 }
 
 void reconnect() {
@@ -269,17 +408,52 @@ void callback(char* topic, byte* payload, unsigned int length) {
     mqttTemp += receivedChar;
     Serial.println(receivedChar);
   }
-  messageTemp = mqttTemp;
+  String topic_receive = String(topic);
+  Serial.println("topic " + topic_receive);
+  if(topic_receive == "Touch_screen_temp"){
+    messageTemp = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_humid"){
+    messageHumid = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_air"){
+    messageAir = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_k_temp"){
+    messageTemp_k = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_k_humid"){
+    messageHumid_k = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_b_temp"){
+    messageTemp_b = mqttTemp;
+  }
+  if(topic_receive == "Touch_screen_b_humid"){
+    messageHumid_b = mqttTemp;
+  }
+  if(screen_mode == "climate"){
+    display_temp();
+  }
+}
 
+
+void display_temp(){
   tft.setTextColor(TFT_RED, TFT_GREEN);
   tft.setTextSize(2);
   tft.setTextFont(2);
   tft.setCursor(5, 100);
   tft.println("Temp cel: " + String(target_temp));
   tft.println("Temperatura: " + messageTemp);
-
-  
+  tft.setTextSize(1);
+  tft.setTextFont(1);
+  tft.println("Wilgotnosc salon: " + messageHumid);
+  tft.println("Czystosc powietrza salon: " + messageAir);
+  tft.println("Temperatura kuchnia: " + messageTemp_k);
+  tft.println("Wilgotnosc kuchnia: " + messageHumid_k);
+  tft.println("Temperatura lazienka: " + messageTemp_b);
+  tft.println("Wilgotnosc lazienka: " + messageHumid_b);
 }
+
 
 void touch_calibrate()
 {
@@ -412,3 +586,22 @@ void greenBtn2()
   tft.drawString("OFF k led", REDBUTTON_X2 + (REDBUTTON_W2 / 2) + 1, REDBUTTON_Y2 + (REDBUTTON_H2 / 2));
   SwitchOn2 = true;
 }
+
+/*
+void drawKeypad()
+{
+// Draw the Button
+tft.setFreeFont(LABEL1_FONT);
+key.initButton(&tft, // REF - LEAVE AS IS
+KEY_X, // X Cord: SEE ABOVE Line 19
+KEY_Y, // Y CORD: SEE ABOVE Line 20
+KEY_W, // WIDTH: SEE ABOVE Line 21
+KEY_H, // HEIGHT: SEE ABOVE Line 22
+TFT_WHITE, // OUTLINE
+keyColor, // TEXT COLOR
+TFT_WHITE, // FILL
+keyLabel, // TEXT TO PRINT
+KEY_TEXTSIZE); // TEXT SIZE: SEE ABOVE Line 23
+key.drawButton();
+}
+*/
