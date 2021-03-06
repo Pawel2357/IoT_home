@@ -3,17 +3,38 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
+#include <SoftwareSerial.h>
 
 
 // Connect to the WiFi
-const char* ssid =        "xyz";
-const char* password =    "xyz";
-const char* mqtt_server = "xyz";
+const char* ssid =        "Dom_2_4";
+const char* password =    "izabelin";
+const char* mqtt_server = "192.168.1.198";
 uint16_t sleepSeconds =    120;         // 2 minutes default
 char* MQTT_client =       "home_battery_soc";
 char* data_topic =        "home_battery_soc";
-char* load_control_topic = "renovable_control";
+const char* topic_subscribe = "renovable_control";
 char* log_topic =          "home_log";
+
+unsigned long waitCount = 0;                 // counter
+uint8_t conn_stat = 0;                       // Connection status for WiFi and MQTT:
+                                             //
+                                             // status |   WiFi   |    MQTT
+                                             // -------+----------+------------
+                                             //      0 |   down   |    down
+                                             //      1 | starting |    down
+                                             //      2 |    up    |    down
+                                             //      3 |    up    |  starting
+                                             //      4 |    up    | finalising
+                                             //      5 |    up    |     up
+
+unsigned long lastStatus = 0;                // counter in example code for conn_stat == 5
+unsigned long lastTask = 0;                  // counter in example code for conn_stat <> 5
+
+const char* Version = "{\"Version\":\"low_prio_wifi_v2\"}";
+const char* Status = "{\"Message\":\"up and running\"}";
+
+String inverter_status = "n"; // means the inverter works normally, n means inverter is turned off
 
 
 WiFiClient espClient;
@@ -26,7 +47,6 @@ PubSubClient client(espClient);
 #define LED             D4  // for flashing the led - LOW active!
 #define MAX485_DE       D2  // data or
 #define MAX485_RE       D1  //      recv enable
-uint8_t pin_3 = D3;
 
 
 // ModBus Register Locations
@@ -114,28 +134,23 @@ int do_update = 0, switch_load = 0;
 bool loadState = true;
 int debug_mode = 0;             // no sleep and mmore updates
 int last_bSOC = 0;
+SoftwareSerial s_relay(D5,D6); // (Rx, Tx)
 
 
 void setup_wifi() {
-
     delay(10);
     // We start by connecting to a WiFi network
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
+    //Serial.println();
+    //Serial.print("Connecting to ");
+    //Serial.println(ssid);
 
-    WiFi.mode(WIFI_STA);
+    //WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    //Serial.println("");
+    //Serial.println("WiFi connected");
+    //Serial.println("IP address: ");
+    //Serial.println(WiFi.localIP());
 }
 
 void setup_solar_charger() {
@@ -298,8 +313,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     rtc.buf[2]  = node.getResponseBuffer(2);
     
   } else {
-    Serial.print("Miss read rtc-data, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read rtc-data, ret val:");
+    //Serial.println(result, HEX);
   } 
 
   // read LIVE-Data
@@ -313,8 +328,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     for(i=0; i< LIVE_DATA_CNT ;i++) live.buf[i] = node.getResponseBuffer(i);
        
   } else {
-    Serial.print("Miss read liva-data, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read liva-data, ret val:");
+    //Serial.println(result, HEX);
   } 
 
   // Statistical Data
@@ -328,8 +343,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     for(i=0; i< STATISTICS_CNT ;i++)  stats.buf[i] = node.getResponseBuffer(i);
     
   } else  {
-    Serial.print("Miss read statistics, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read statistics, ret val:");
+    //Serial.println(result, HEX);
   } 
 
   // Battery SOC
@@ -342,8 +357,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     batterySOC = node.getResponseBuffer(0);
     
   } else  {
-    Serial.print("Miss read batterySOC, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read batterySOC, ret val:");
+    //Serial.println(result, HEX);
   }
 
   // Battery Net Current = Icharge - Iload
@@ -357,8 +372,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     batteryCurrent |= node.getResponseBuffer(1) << 16;
     
   } else  {
-    Serial.print("Miss read batteryCurrent, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read batteryCurrent, ret val:");
+    //Serial.println(result, HEX);
   }
 
   // State of the Load Switch
@@ -371,8 +386,8 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     loadState = node.getResponseBuffer(0);
         
   } else  {
-    Serial.print("Miss read loadState, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read loadState, ret val:");
+    //Serial.println(result, HEX);
   }
     
   // Read Status Flags
@@ -383,7 +398,7 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
   if (result == node.ku8MBSuccess)  {
 
     uint16_t temp = node.getResponseBuffer(0);
-    Serial.print( "Batt Flags : "); Serial.println(temp);
+    //Serial.print( "Batt Flags : "); Serial.println(temp);
     
     status_batt.volt = temp & 0b1111;
     status_batt.temp = (temp  >> 4 ) & 0b1111;
@@ -391,7 +406,7 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     status_batt.rated_volt = (temp  >> 15 ) & 0b1;
 
     temp = node.getResponseBuffer(1);
-    Serial.print( "Chrg Flags : "); Serial.println(temp, HEX);
+    //Serial.print( "Chrg Flags : "); Serial.println(temp, HEX);
 
     //for(i=0; i<16; i++) Serial.print( (temp >> (15-i) ) & 1 );
     //Serial.println();
@@ -402,13 +417,13 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
     //charger_operation = ( temp & 0b0000000000000000 ) >> 0 ;
     
     //Serial.print( "charger_input : "); Serial.println( charger_input );
-    Serial.print( "charger_mode  : "); Serial.println( charger_mode );
+    //Serial.print( "charger_mode  : "); Serial.println( charger_mode );
     //Serial.print( "charger_oper  : "); Serial.println( charger_operation );
     //Serial.print( "charger_state : "); Serial.println( charger_state );
     
   } else  {
-    Serial.print("Miss read ChargeState, ret val:");
-    Serial.println(result, HEX);
+    //Serial.print("Miss read ChargeState, ret val:");
+    //Serial.println(result, HEX);
   }
   
   // results
@@ -427,65 +442,82 @@ void get_charger_data(String *bSOC, String *live_l_bV, String *data) {
   Serial.print("live.l.bP" + String(live.l.bP));
   Serial.print("charger_charging_status[ charger_mode]" + String(charger_charging_status[ charger_mode]));
   Serial.print("stats.s.genEnerDay" + String(stats.s.genEnerDay));
-  Serial.print("stats.s.genEnerTotal" + String(stats.s.genEnerTotal));
+  Serial.print("stats.s.genEnerTotal" + String(stats.s.genEnerTotal));   
   *data = String(batterySOC) + "," + String(batteryCurrent) + "," + String(live.l.pV) + "," + String(live.l.pI) + "," + String(live.l.pP) + "," + String(live.l.bV) + "," + String(live.l.bI) + "," + String(live.l.bP) + "," + String(charger_charging_status[ charger_mode]) + "," + String(stats.s.genEnerDay) + "," + String(stats.s.genEnerTotal);
   *live_l_bV = String(live.l.bV);
   *bSOC = String(batterySOC);
 }
 
+void send_to_arduino(String receivedChar){
+  //char sm[] = receivedChar;
+  s_relay.write(receivedChar[0]);
+}
+
 void callback(char* topic, byte* payload, unsigned int length) {
  // get subscribed message char by char
  // TODO: Do it separately for different topics or add time distance between got chars to communicate separately.
+ String sign = "";
  for (int i=0;i<length;i++) {
   char receivedChar = (char)payload[i];
-  if(receivedChar == 'c'){
-    //float voltage = measure_voltage();
-    String bSOC;
-    String live_l_bV;
-    String data;
-    
-    get_charger_data(&bSOC, &live_l_bV, &data);
-    // here calculate panel parameters
-    // and publish them
-    client.publish(data_topic, String(data).c_str(), true);
-  //}else{
-   // send_to_arduino(receivedChar);
+
+  Serial.print("inverter_status");
+  Serial.print(inverter_status);
+  sign += receivedChar;
+  Serial.print("sign");
+  Serial.print(sign);
+  send_to_arduino(sign);
+  /*
+  if (sign == "f"){ //  inverter_status
+    inverter_status = "n";
+    send_to_arduino("a");
+    delay(40);
+    send_to_arduino("b");
+    delay(40);
+    send_to_arduino("c");
+    delay(40);
+    send_to_arduino("d");
+    delay(40);
+    send_to_arduino("e");
+    delay(40);
+    send_to_arduino("g");
+    delay(40);
+    send_to_arduino("f");
   }
- }
+  if (sign == "7"){
+    inverter_status = "o";
+    send_to_arduino("7");
+  }
+  if (inverter_status == "o"){
+    delay(60);
+    send_to_arduino(sign);
+  } */
+  
+  }
 }
 
 void setup(){
     // say hello
     Serial.begin(115200);
+    s_relay.begin(9600);
+    WiFi.mode(WIFI_STA);
     while (!Serial) { ; }
-    Serial.println();
-    Serial.println("Hello World! I'm an EpEver Solar Monitor!");
+    //Serial.println();
+    //Serial.println("Hello World! I'm an EpEver Solar Monitor!");
+    client.setCallback(callback);
 
     setup_wifi();
     client.setServer(mqtt_server, 1883);
     
     setup_solar_charger();
-    pinMode(pin_3, OUTPUT);
-    digitalWrite(pin_3, LOW);
 }
 
 void reconnect() {
  // Loop until we're reconnected
- while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
-   yield();
    // Attempt to connect
  if (client.connect(MQTT_client)) {
    Serial.println("connected");
    // ... and subscribe to topic
    // client.subscribe("lamp_1");
- } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
-   // Wait 5 seconds before retrying
-   delay(5000);
-   }
  }
 }
 
@@ -508,24 +540,80 @@ void postTransmission()
 
 void loop(){
 
-  if (!client.connected()) {
+  // start of non-blocking connection setup section
+  if ((WiFi.status() != WL_CONNECTED) && (conn_stat != 1)) { conn_stat = 0; }
+  if ((WiFi.status() == WL_CONNECTED) && !client.connected() && (conn_stat != 3))  { conn_stat = 2; }
+  if ((WiFi.status() == WL_CONNECTED) && client.connected() && (conn_stat != 5)) { conn_stat = 4;}
+  switch (conn_stat) {
+    case 0:                                                       // MQTT and WiFi down: start WiFi
+      Serial.println("MQTT and WiFi down: start WiFi");
+      setup_wifi();
+      conn_stat = 1;
+      break;
+    case 1:                                                       // WiFi starting, do nothing here
+      Serial.println("WiFi starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 2:                                                       // WiFi up, MQTT down: start MQTT
+      //Serial.println("WiFi up, MQTT down: start MQTT");
       reconnect();
+      conn_stat = 3;
+      waitCount = 0;
+      break;
+    case 3:                                                       // WiFi up, MQTT starting, do nothing here
+      Serial.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 4:                                                       // WiFi up, MQTT up: finish MQTT configuration
+      Serial.println("WiFi up, MQTT up: finish MQTT configuration");
+      client.subscribe(topic_subscribe);
+      //mqttClient.publish(input_topic, Version);
+      conn_stat = 5;                    
+      break;
   }
-  client.loop();
-  String bSOC;
-  String live_l_bV;
-  String data;
-  get_charger_data(&bSOC, &live_l_bV, &data);
-  client.publish(data_topic, String(data).c_str(), true);
-  delay(20000);
-  Serial.print("soc");
-  Serial.print(bSOC);
-  float bSOC_average = (last_bSOC + bSOC.toInt()) / 2;
-  //get_charger_data();
-  if(bSOC_average > 35){
-    digitalWrite(pin_3, HIGH);
+  if (conn_stat == 5) {
+    if (millis() - lastStatus > 20000) {                            // Start send status every 10 sec (just as an example)
+      String bSOC;
+      String live_l_bV;
+      String data;
+      get_charger_data(&bSOC, &live_l_bV, &data);
+      client.publish(data_topic, String(data).c_str(), true);              //      send status to broker
+      client.loop();                                            //      give control to MQTT to send message to broker
+      lastStatus = millis();                                        //      remember time of last sent status message
+    }                                           // internal household function for OTA
+    client.loop();                                              // internal household function for MQTT
+  } 
+// end of section for tasks where WiFi/MQTT are required
+
+// start section for tasks which should run regardless of WiFi/MQTT
+  if (millis() - lastTask > 100) {                                 // Print message every second (just as an example)
+    String bSOC;
+    String live_l_bV;
+    String data;
+    get_charger_data(&bSOC, &live_l_bV, &data);
+    float bSOC_average = (last_bSOC + bSOC.toInt()) / 2;
+    if(bSOC_average > 90){
+      delay(40);
+      send_to_arduino("7");
+      inverter_status = "o";
+    }
+    if(bSOC_average < 25){
+      send_to_arduino("a");
+      delay(40);
+      send_to_arduino("b");
+      delay(40);
+      send_to_arduino("c");
+      delay(40);
+      send_to_arduino("d");
+      delay(40);
+      send_to_arduino("e");
+      delay(40);
+      send_to_arduino("g");
+      delay(100);
+      send_to_arduino("f");
+      inverter_status = "n";
+    }
+    last_bSOC = bSOC.toInt();
+    lastTask = millis();
   }
-  if(bSOC_average < 30){
-    digitalWrite(pin_3, LOW);
-  }
-  last_bSOC = bSOC.toInt();
+}
