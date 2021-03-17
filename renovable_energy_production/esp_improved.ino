@@ -7,9 +7,9 @@
 
 
 // Connect to the WiFi
-const char* ssid =        "Dom_2_4";
-const char* password =    "izabelin";
-const char* mqtt_server = "192.168.1.198";
+const char* ssid =        "xyz";
+const char* password =    "xyz";
+const char* mqtt_server = "xyz";
 uint16_t sleepSeconds =    120;         // 2 minutes default
 char* MQTT_client =       "home_battery_soc";
 char* data_topic =        "home_battery_soc";
@@ -586,7 +586,10 @@ void loop(){
 // end of section for tasks where WiFi/MQTT are required
 
 // start section for tasks which should run regardless of WiFi/MQTT
-  if (millis() - lastTask > 100) {                                 // Print message every second (just as an example)
+  if (waitCount > 1200){
+    ESP.restart();
+  }
+  if (millis() - lastTask > 8000) {                                 // Print message every second (just as an example)
     String bSOC;
     String live_l_bV;
     String data;
@@ -599,21 +602,22 @@ void loop(){
     }
     if(bSOC_average < 25){
       send_to_arduino("a");
-      delay(40);
+      delay(200);
       send_to_arduino("b");
-      delay(40);
+      delay(200);
       send_to_arduino("c");
-      delay(40);
+      delay(200);
       send_to_arduino("d");
-      delay(40);
+      delay(200);
       send_to_arduino("e");
-      delay(40);
+      delay(200);
       send_to_arduino("g");
-      delay(100);
+      delay(200);
       send_to_arduino("f");
       inverter_status = "n";
     }
     last_bSOC = bSOC.toInt();
     lastTask = millis();
   }
+  delay(100);
 }
