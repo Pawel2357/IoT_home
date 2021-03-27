@@ -21,8 +21,10 @@ topic_ventilation = "ventilation_living_room"
 topic_ventilation_bedroom = "ventilation_bedroom"
 charging_topic = "charging_1"
 stop_threads = False
+outdoor_aq_threshold = 50
+global thr
 
-BLYNK_AUTH = 'xyz'
+BLYNK_AUTH = 'Bo7ol7uuvgx7Gy4uGHQ0j8eVgC_6Za-r'
 blynk = BlynkLib.Blynk(BLYNK_AUTH,
                        server=broker_ip,        # set server address
                        port=8080,                       # set server port
@@ -40,9 +42,11 @@ def get_temperature(filename):
     with open(filename) as csvfile:
         last10 = list(csvfile)[-10:]
         temp = []
+        print("last10", last10)
         for row in last10:
             x = row.split(",")
             temp.append(float(x[1]))
+        print("temp", temp)
     temp = np.mean(temp)
     return temp
 
@@ -85,21 +89,121 @@ def fast_ventilation(client, topic):
     time.sleep(0.05)
     client.publish(topic, "1")
     
+
+def get_outdoor_temp_humidity(climate_data_file='/home/pawel/Documents/IoT_home/data/outdoor_climate_data.csv'):
+    with open(climate_data_file) as csvfile:
+        last10 = list(csvfile)[-10:]
+        temp = []
+        humidity = []
+        air_quality = []
+        for row in last10:
+            x = row.split(",")
+            temp.append(float(x[2]))
+            if float(x[1][1:]) < 100:
+                humidity.append(float(x[1][1:]))
+            air_quality.append(float(x[3][:-2]))
+    temp = np.mean(temp)
+    if len(humidity) > 0:
+        humidity = np.mean(humidity)
+    else:
+        humidity = 0
+    air_quality = np.mean(air_quality)
+    return temp, humidity, air_quality
+    
+
+class StoppableThread(threading.Thread):
+    "Thread class with a stop() method. The thread itself has to check regularly for the stopped() condition."
+    def __init__(self):
+        super(StoppableThread, self).__init__()
+        self._stop_event = threading.Event()
+        
+    def stop(self):
+        self._stop_event.set()
+
+    def join(self, *args, **kwargs):
+        self.stop()
+        super(StoppableThread,self).join(*args, **kwargs)
+
+    def run(self):
+        print("start running")
+        while not self._stop_event.is_set():
+            localtime = datetime.datetime.now()
+            temp, humidity, air_quality = get_outdoor_temp_humidity()
+            time.sleep(10)
+            if localtime.hour >= 3 and localtime.hour <= 23:
+                if humidity < 90:
+                    if air_quality < 20:
+                        vent_min = min(30, 110 - humidity)
+                    else:
+                        vent_min = 15
+                else:
+                    if air_quality < 20:
+                        vent_min = min(20, 110 - humidity)
+                    else:
+                        vent_min = 13
+                print('localtime.minute', localtime.minute)
+                print('vent_min', vent_min)
+                if localtime.minute < vent_min:
+                    client = mqtt.Client()
+                    client.connect(broker_ip, broker_port)
+                    print("slow vent")
+                    slow_ventilation(client, topic_ventilation)
+                else:
+                    client = mqtt.Client()
+                    client.connect(broker_ip, broker_port)
+                    print("off vent")
+                    off_ventilation(client, topic_ventilation)
+            else:
+                client = mqtt.Client()
+                client.connect(broker_ip, broker_port)
+                off_ventilation(client, topic_ventilation)
+            print("still running")
+        client = mqtt.Client()
+        client.connect(broker_ip, broker_port)
+        off_ventilation(client, topic_ventilation)
+        print('turn off')
+        print("stopped!")
+
+    
 # Register Virtual Pins
 @blynk.VIRTUAL_WRITE(0)
 def my_write_handler(value):
+    global thr
     client = mqtt.Client()
     client.connect(broker_ip, 1883)
     print(value)
     if value[0] == '1':
+        try:
+            thr.join()
+            print('join thread')
+        except:
+            pass
         print('off')
         off_ventilation(client, topic_ventilation)
     elif value[0] == '2':
+        try:
+            thr.join()
+            print('join thread')
+        except:
+            pass
         print('slow')
         slow_ventilation(client, topic_ventilation)
     elif value[0] == '3':
+        try:
+            thr.join()
+            print('join thread')
+        except:
+            pass
         print('fast')
         fast_ventilation(client, topic_ventilation)
+    elif value[0] == '4':
+        try:
+            thr.join()
+            print('join thread')
+        except:
+            pass
+        thr = StoppableThread()
+        thr.start()
         
 def is_air_clean(measure_time=260, fast=False):
     client = mqtt.Client()
@@ -116,6 +220,15 @@ def is_air_clean(measure_time=260, fast=False):
 def get_regression_coefficient(X, y):
     reg = LinearRegression().fit(X, y)
     return reg.coef_
+
+def get_measure_time(run_iterations, p_coeff=1.03, c_coeff=5, max_run_iterations=7):
+    run_iterations = run_iterations % max_run_iterations
+    return 260 + (run_iterations * c_coeff) * p_coeff**run_iterations
+    
+def get_sleep_time(run_iterations, p_coeff=1.03, c_coeff=5, max_run_iterations=6):
+    run_iterations = run_iterations % max_run_iterations
+    return (45 + (run_iterations * c_coeff)* p_coeff**run_iterations) * 60
+    
         
 def auto_ventilation(fast=True):
     aq_lst = []
@@ -124,10 +237,10 @@ def auto_ventilation(fast=True):
         if stop_threads:
             break
         else:
-            if run_iterations > 3:
-                aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations, fast=fast)
+            if run_iterations >= 3:
+                aq_float_final, aq_float = is_air_clean(measure_time=get_measure_time(run_iterations), fast=fast)
             else:
-                aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations)
+                aq_float_final, aq_float = is_air_clean(measure_time=get_measure_time(run_iterations))
             if len(aq_lst) < 1:
                 aq_lst.append(aq_float)
                 aq_lst.append(aq_float_final)
@@ -146,8 +259,9 @@ def auto_ventilation(fast=True):
                 client = mqtt.Client()
                 client.connect(broker_ip, 1883)
                 fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
-                time.sleep(60 * 60)
+                time.sleep(get_sleep_time(run_iterations))
                 aq_lst = []
+                run_iterations = 0
         run_iterations += 1
 
 def auto_ventilation_night(fast=False):
@@ -164,7 +278,7 @@ def auto_ventilation_night(fast=False):
                 if len(aq_lst) > 3 and coef[0][0] < - 1:
                     aq_float_final, aq_float = is_air_clean(fast=fast)
                 else:
-                    aq_float_final, aq_float = is_air_clean(measure_time=260 + (run_iterations * 8) * 1.2**run_iterations)
+                    aq_float_final, aq_float = is_air_clean(measure_time=get_measure_time(run_iterations, c_coeff=8))
                 if len(aq_lst) < 1:
                     aq_lst.append(aq_float)
                     aq_lst.append(aq_float_final)
@@ -182,7 +296,7 @@ def auto_ventilation_night(fast=False):
                     client = mqtt.Client()
                     client.connect(broker_ip, 1883)
                     fast_ventilation(client, topic_ventilation_bedroom) # meaning depends on connection
-                    time.sleep((45 + run_iterations * 8) * 60)
+                    time.sleep(get_sleep_time(run_iterations))
                     aq_lst = []
                     run_iterations = 0
             else:
@@ -276,6 +390,7 @@ def read_temperature():
         time.sleep(15)
         log_temp()
         temp = get_temperature(filename)
+        print("temp floor", temp)
         blynk.virtual_write(1, '{:.2f}'.format(temp))
         
 def read_aq_bedroom():
@@ -287,12 +402,39 @@ def read_aq_bedroom():
         blynk.virtual_write(7, '{:.2f}'.format(aq_float))
         
         
+def get_outdoor_air_quality(filename):
+    with open(filename) as csvfile:
+        last10 = list(csvfile)[-10:]
+        air_q = []
+        for row in last10:
+            x = row.split(",")
+            air_q.append(float(x[3][:-2]))
+    air_q = np.mean(air_q)
+    return air_q
+
+        
+def check_air_quality():
+    global blynk
+    filename = "/home/pawel/Documents/IoT_home/data/outdoor_climate_data.csv"
+    while True:
+        time.sleep(15)
+        aq = get_outdoor_air_quality(filename)
+        if aq > outdoor_aq_threshold:
+            client = mqtt.Client()
+            client.connect(broker_ip, 1883)
+            off_ventilation(client, topic_ventilation)
+            off_ventilation(client, topic_ventilation)
+            client = mqtt.Client()
+            client.connect(broker_ip, 1883)
+            fast_ventilation(client, topic_ventilation_bedroom)
+            fast_ventilation(client, topic_ventilation_bedroom)
+        
+        
 def log_temperature():
     def on_connect(client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
         topic = cfg.kitchen_floor_temp_log_topic
         client.subscribe(topic)
-
 
 
     def on_message(client, userdata, msg):
@@ -340,20 +482,9 @@ _thread.start_new_thread(read_temperature,() )
 _thread.start_new_thread(log_temperature,() )
 _thread.start_new_thread(log_aq_bedroom,() )
 _thread.start_new_thread(read_aq_bedroom,() )
+# _thread.start_new_thread(check_air_quality(),() )
 
 global blynk
 while True:
     blynk.run()
-    
-def start():
-    _thread.start_new_thread(read_temperature,() )
-    _thread.start_new_thread(log_temperature,() )
-    _thread.start_new_thread(log_aq_bedroom,() )
-    _thread.start_new_thread(read_aq_bedroom,() )
-
-    global blynk
-    while True:
-        blynk.run()
-        
-start()
   
