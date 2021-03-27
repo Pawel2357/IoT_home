@@ -100,18 +100,21 @@ def get_temp(climate_data_file):
 def get_target_temperature(day_temp=21.0):
     now = datetime.datetime.now()
     hour = now.hour
-    if hour > 3 and hour <= 6:
-        blynk.virtual_write(6, '{:.1f}'.format(19.4))
-        log_temp_set('2', 19.4)
-        return 19.4, 0
+    if hour > 3 and hour <= 5:
+        blynk.virtual_write(6, '{:.1f}'.format(20.0))
+        log_temp_set('2', 20.0)
+        return 20.0, 0
+    elif hour > 5 and hour <= 6:
+        blynk.virtual_write(6, '{:.1f}'.format(20.6))
+        log_temp_set('2', 20.6)
+        return 20.6, 1
     elif hour > 6 and hour <= 20:
         blynk.virtual_write(6, '{:.1f}'.format(day_temp))
-        log_temp_set('2', day_temp)
         return day_temp, 2
     elif (hour > 20 and hour <= 23) or (hour >= 0 and hour <= 3):
-        blynk.virtual_write(6, '{:.1f}'.format(18.0))
-        log_temp_set('2', 18.0)
-        return 18.0, 6
+        blynk.virtual_write(6, '{:.1f}'.format(18.4))
+        log_temp_set('2', 18.4)
+        return 18.4, 6
     else:
         blynk.virtual_write(6, '{:.1f}'.format(20.0))
         log_temp_set('2', 20.0)
@@ -163,7 +166,7 @@ def control_temperature_standard(topic_circulation="circulation_pump",  topic_li
 
 BLYNK_AUTH = 'XvFwE7tPAxGp-lQ6P0Lhh7p2iOpYV8ut'
 blynk = BlynkLib.Blynk(BLYNK_AUTH,
-                       server='xyz',        # set server address
+                       server='192.168.1.198',        # set server address
                        port=8080,                       # set server port
                        heartbeat=30,                    # set heartbeat to 30 secs
                        #log=print                       # use print function for debug logging
@@ -232,9 +235,9 @@ class StoppableThread(threading.Thread):
         
 @blynk.VIRTUAL_WRITE(3)
 def my_write_handler(value):
-    global temp_set
     log_temp_set(value[0], temp_set)
     global thr
+    global temp_set
     print(value)
     if value[0] == '1':
         try:
@@ -265,7 +268,7 @@ def my_write_handler(value):
             print('join thread')
         except:
             pass
-        thr = StoppableThread(is_constant_temp=True, constant_temp=temp_set)
+        thr = StoppableThread(is_constant_temp=True, constant_temp=temp_set, is_turbo=True)
         thr.start()
     elif value[0] == '4': # turn on
         try:
@@ -311,11 +314,10 @@ def display_temp():
         time.sleep(20)
         temp, humidity, air_quality = get_temp_humidity(climate_data_file)
         blynk.virtual_write(0, '{:.2f}'.format(temp))
-        # energy_hp = get_consumption()
-        # blynk.virtual_write(7, '{:.2f}'.format(energy_hp * 0.73))
+        energy_hp = get_consumption()
+        blynk.virtual_write(7, '{:.2f}'.format(energy_hp * 0.73))
         client = mqtt.Client()
         client.connect(broker_ip, broker_port)
-        print("publish")
         client.publish("Touch_screen_temp", '{:.2f}'.format(temp))
 
 _thread.start_new_thread(log_temp,() )
