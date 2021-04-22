@@ -1,3 +1,5 @@
+#include "EmonLib.h"                   // Include Emon Library
+
 String a; //Initialized variable to store recieved data
 const int pin_1 = 2;
 const int pin_2 = 3;
@@ -7,6 +9,11 @@ const int pin_5 = 6;
 const int pin_6 = 7;
 const int pin_7 = 8;
 const int pin_8 = 9;
+
+EnergyMonitor emon1;                   // Create an instance
+EnergyMonitor emon2;                   // Create an instance
+EnergyMonitor emon3;                   // Create an instance
+EnergyMonitor emon4;                   // Create an instance
 
 boolean inverter_running = false;
 
@@ -29,6 +36,10 @@ void setup() {
   digitalWrite(pin_6, HIGH);
   digitalWrite(pin_7, HIGH);
   digitalWrite(pin_8, HIGH);
+  emon1.current(2, 22);             // Current: input pin, calibration.
+  emon2.current(3, 22);             // Current: input pin, calibration.
+  emon3.current(4, 22);             // Current: kitchen/dishwasher
+  emon4.current(5, 22);             // Current: battery
 }
 
 void loop() {
