@@ -14,8 +14,10 @@ EnergyMonitor emon1;                   // Create an instance
 EnergyMonitor emon2;                   // Create an instance
 EnergyMonitor emon3;                   // Create an instance
 EnergyMonitor emon4;                   // Create an instance
+unsigned long lastStatus = 0;
 
 boolean inverter_running = false;
+boolean kitchen_load_on = false;
 
 void setup() {
   //Serial Begin at 9600 Baud
@@ -43,8 +45,40 @@ void setup() {
 }
 
 void loop() {
+  double power_kitchen = emon3.calcIrms(1480) * 230.0;  // Calculate Irms only
+  if(power_kitchen > 2150){
+    if(kitchen_load_on==true){
+      digitalWrite(pin_1, HIGH);
+      digitalWrite(pin_2, HIGH);
+      digitalWrite(pin_3, HIGH);
+      digitalWrite(pin_4, HIGH);
+      digitalWrite(pin_5, HIGH);
+      digitalWrite(pin_6, HIGH);
+      digitalWrite(pin_8, HIGH);
+      kitchen_load_on = false;
+      delay(100);
+      digitalWrite(pin_7, LOW);
+      delay(1500);
+    }
+  }
+  
 
   if (Serial.available() > 0) {
+
+    if (millis() - lastStatus > 1000){
+      double Irms = emon1.calcIrms(1480);  // Calculate Irms only
+      Serial.print(String(Irms * 230.0) + ",Power_7,");         // Apparent power
+    }else if(millis() - lastStatus > 2000){
+      double Irms_hp = emon2.calcIrms(1480);  // Calculate Irms only
+      Serial.print(String(Irms_hp * 230.0) + ",Power_hp");         // Apparent power
+    }else if(millis() - lastStatus > 3000){
+      double Irms_kitchen = emon3.calcIrms(1480);  // Calculate Irms only
+      Serial.print(String(Irms_kitchen * 230.0) + ",Power_kitchen,");
+    }else if(millis() - lastStatus > 4000){
+      double Irms_battery = emon4.calcIrms(1480);  // Calculate Irms only
+      Serial.print(String(Irms_battery * 230.0) + ",Power_hp");
+      lastStatus = millis();
+    }
     // read the incoming byte:
     a = Serial.readString();
 
@@ -58,6 +92,7 @@ void loop() {
       digitalWrite(pin_5, HIGH);
       digitalWrite(pin_6, HIGH);
       digitalWrite(pin_8, HIGH);
+      kitchen_load_on = false;
       delay(100);
       digitalWrite(pin_7, LOW);
       delay(1500);
@@ -70,6 +105,7 @@ void loop() {
       digitalWrite(pin_5, HIGH);
       digitalWrite(pin_6, HIGH);
       digitalWrite(pin_8, HIGH);
+      kitchen_load_on = false;
       delay(100);
       digitalWrite(pin_7, HIGH);
       delay(900);
@@ -80,8 +116,10 @@ void loop() {
       if (a == "1"){
         digitalWrite(pin_1, LOW);
         //Serial.print(a);
+        kitchen_load_on = true;
       }if (a == "a"){
         digitalWrite(pin_1, HIGH);
+        kitchen_load_on = false;
       }if (a == "2"){
         digitalWrite(pin_2, LOW);
       }if (a == "b"){
