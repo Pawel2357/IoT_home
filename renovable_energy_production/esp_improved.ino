@@ -619,5 +619,21 @@ void loop(){
     last_bSOC = bSOC.toInt();
     lastTask = millis();
   }
+  if (s.available()>0)
+    {
+      data=s.read();
+      client.publish("energy_use", String(data).c_str(), true);
+    }
   delay(100);
+}
+
+
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if (s_relay.available()>0)
+  {
+    data=s_relay.read();
+    
+  }
 }
