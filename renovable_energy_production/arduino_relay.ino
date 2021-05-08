@@ -124,7 +124,7 @@ void loop() {
       // turn on power_7
       if (a == "1"){
         // check if big load
-        if(power_7 > 1000 && power_7 < max_inverter_power){
+        if(power_7 > 1000 && power_7 < max_inverter_power - 1400){
           if(car_charging_on==true){
             digitalWrite(pin_2, HIGH); // turn off car charging
             car_charging_on==false;
