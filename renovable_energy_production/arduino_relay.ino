@@ -23,6 +23,7 @@ unsigned long lastStatus_check = 0;
 boolean inverter_running = false;
 boolean kitchen_load_on = false;
 boolean car_charging_on = false;
+boolean comp_load_on = false;
 
 double power_inverter;
 double power_7;
@@ -57,7 +58,10 @@ void loop() {
   if (millis() - lastStatus_check > 120){
     power_inverter = emon4.calcIrms(1480) * 230.0;  // Calculate Irms only
     if(power_inverter > max_inverter_power){
-      if(power_inverter < (max_inverter_power + 1430) && car_charging_on==true && kitchen_load_on==true){
+      if(power_inverter < (max_inverter_power + 110) && car_charging_on==false && kitchen_load_on==true && comp_load_on==true){
+        digitalWrite(pin_6, HIGH);
+        comp_load_on==false;
+      }else if(power_inverter < (max_inverter_power + 1430) && car_charging_on==true && kitchen_load_on==true){
         digitalWrite(pin_2, HIGH);
         car_charging_on = false;
       }else{
@@ -70,6 +74,7 @@ void loop() {
         digitalWrite(pin_8, HIGH);
         car_charging_on = false;
         kitchen_load_on = false;
+        comp_load_on = false;
       }
     }
     lastStatus_check=millis();
@@ -101,6 +106,7 @@ void loop() {
       digitalWrite(pin_8, HIGH);
       car_charging_on = false;
       kitchen_load_on = false;
+      comp_load_on = false;
       delay(100);
       digitalWrite(pin_7, LOW);
       delay(1500);
@@ -115,6 +121,7 @@ void loop() {
       digitalWrite(pin_8, HIGH);
       kitchen_load_on = false;
       car_charging_on = false;
+      comp_load_on = false;
       delay(100);
       digitalWrite(pin_7, HIGH);
       delay(900);
@@ -159,10 +166,12 @@ void loop() {
         digitalWrite(pin_5, LOW);
       }if (a == "d"){
         digitalWrite(pin_5, HIGH);
-      }if (a == "6"){
+      }if (a == "6" && power_inverter < max_inverter_power - 400){
         digitalWrite(pin_6, LOW);
+        comp_load_on = true;
       }if (a == "e"){
         digitalWrite(pin_6, HIGH);
+        comp_load_on = false;
       }if (a == "8"){
         digitalWrite(pin_8, LOW);
       }if (a == "g"){
