@@ -24,17 +24,11 @@ boolean inverter_running = false;
 boolean kitchen_load_on = false;
 boolean car_charging_on = false;
 boolean comp_load_on = false;
-boolean ind_kitchen_load_on = false;
-boolean heat_pump_load_on = false;
 
-double power_kitchen;
 double power_inverter;
-double power_ind_kitchen;
-double power_heat_pump;
-double power_comp;
-double power;
-
-int max_inverter_power = 2560;
+double power_7;
+int max_inverter_power = 2400;
+double Irms;
 
 void setup() {
   //Serial Begin at 9600 Baud
@@ -62,38 +56,13 @@ void setup() {
 }
 
 void loop() {
-  if (millis() - lastStatus_check > 80){
+  if (millis() - lastStatus_check > 100){
     power_inverter = emon4.calcIrms(1480) * 230.0;  // Calculate Irms only
-    //power_kitchen = emon1.calcIrms(1480) * 230.0;
-    //power_ind_kitchen = emon3.calcIrms(1480) * 230.0;
-    //power_heat_pump = emon2.calcIrms(1480) * 230.0;
-    
-    power_kitchen = 200;
-    power_ind_kitchen = 200;
-    power_heat_pump = 200;
     if(power_inverter > max_inverter_power){
-      // heat pump priority
-      if(heat_pump_load_on==true && power_heat_pump > 300 && (comp_load_on==true || car_charging_on==true || kitchen_load_on==true || ind_kitchen_load_on==true)){
-        digitalWrite(pin_6, HIGH);
-        comp_load_on = false;
-        digitalWrite(pin_2, HIGH); // turn off car charging
-        car_charging_on = false;
-        digitalWrite(pin_1, HIGH);
-        kitchen_load_on = false;
-
-        power_ind_kitchen = false;
-      }else if(power_ind_kitchen > 1900 && power_ind_kitchen < max_inverter_power){  // dishwasher priority
-        // turn off comp, kitchen, car charging
+      if(power_inverter < (max_inverter_power + 120) && car_charging_on==false && kitchen_load_on==true && comp_load_on==true){
         digitalWrite(pin_6, HIGH);
         comp_load_on==false;
-        digitalWrite(pin_2, HIGH); // turn off car charging
-        car_charging_on = false;
-        digitalWrite(pin_1, HIGH);
-        kitchen_load_on = false;
-      }else if(power_inverter < (max_inverter_power + 120) && car_charging_on==false && comp_load_on==true){
-        digitalWrite(pin_6, HIGH);
-        comp_load_on==false;
-      }else if(power_inverter < (max_inverter_power + 1430) && car_charging_on==true && kitchen_load_on==true){
+      }else if(power_inverter < (max_inverter_power + 1430) && car_charging_on==true){
         digitalWrite(pin_2, HIGH);
         car_charging_on = false;
       }else{
@@ -107,14 +76,18 @@ void loop() {
         car_charging_on = false;
         kitchen_load_on = false;
         comp_load_on = false;
-        ind_kitchen_load_on = false;
       }
     }
     lastStatus_check=millis();
   }
 
   if (millis() - lastStatus > 3000){
-    Serial.print(String(power_inverter) + ",Power_inverter," + String(power_ind_kitchen) + ",Power_kitchen," + String(power_heat_pump) + ",Power_hp," + String(power_kitchen) + ",Power_7");
+    double Irms = emon1.calcIrms(1480);  // Calculate Irms only
+    power_7 = Irms * 230.0;
+    double Irms_hp = emon2.calcIrms(1480);  // Calculate Irms only
+    double Irms_kitchen = emon3.calcIrms(1480);  // Calculate Irms only
+    double Irms_battery = emon4.calcIrms(1480);  // Calculate Irms only
+    Serial.print(String(Irms_battery * 230.0) + ",Power_inverter," + String(Irms_kitchen * 230.0) + ",Power_kitchen," + String(Irms_hp * 230.0) + ",Power_hp," + String(power_7) + ",Power_7");
   }
   
 
@@ -135,8 +108,6 @@ void loop() {
       car_charging_on = false;
       kitchen_load_on = false;
       comp_load_on = false;
-      ind_kitchen_load_on = false;
-      heat_pump_load_on = false;
       delay(100);
       digitalWrite(pin_7, LOW);
       delay(1500);
@@ -152,8 +123,6 @@ void loop() {
       kitchen_load_on = false;
       car_charging_on = false;
       comp_load_on = false;
-      ind_kitchen_load_on = false;
-      heat_pump_load_on = false;
       delay(100);
       digitalWrite(pin_7, HIGH);
       delay(900);
@@ -161,7 +130,7 @@ void loop() {
     }
     if (inverter_running == true){
       // turn on power_7
-      if (a == "1" && power_kitchen < 500){
+      if (a == "1" && power_7 < 500){
         // check if big load
         digitalWrite(pin_1, LOW);
         kitchen_load_on = true;
@@ -174,18 +143,14 @@ void loop() {
       }if (a == "b"){
         digitalWrite(pin_2, HIGH);
         car_charging_on = false;
-      }if (a == "3" && power_heat_pump < 300){
+      }if (a == "3"){
         digitalWrite(pin_3, LOW);
-        heat_pump_load_on = true;
       }if (a == "c"){
         digitalWrite(pin_3, HIGH);
-        heat_pump_load_on = false;
-      }if (a == "4" && power_ind_kitchen < 400){
+      }if (a == "4"){
         digitalWrite(pin_4, LOW);
-        ind_kitchen_load_on = true;
       }if (a == "d"){
         digitalWrite(pin_4, HIGH);
-        ind_kitchen_load_on = false;
       }if (a == "5"){
         digitalWrite(pin_5, LOW);
       }if (a == "d"){
