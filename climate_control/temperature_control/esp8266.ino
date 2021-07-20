@@ -135,6 +135,10 @@ void loop()
   // end of non-blocking connection setup section
 
   // start section with tasks where WiFi/MQTT is required
+  if (waitCount > 550){
+    ESP.restart();
+  }
+  
   if (conn_stat == 5) {
     if(millis() - lastMillis > interval){
       sensors.requestTemperatures(); 
