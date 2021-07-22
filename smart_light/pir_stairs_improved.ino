@@ -223,6 +223,9 @@ void loop() {                                                     // with curren
 // end of section for tasks where WiFi/MQTT are required
 
 // start section for tasks which should run regardless of WiFi/MQTT
+  if (waitCount > 550){
+    ESP.restart();
+  }
   control_lamp_1();
   control_lamp_2();
   delay(100);
