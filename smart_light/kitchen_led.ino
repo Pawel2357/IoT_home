@@ -28,14 +28,20 @@ const char* mqtt_server = "xyz";
 
 const char* topic = "led_kitchen";
 const char* log_topic = "home_log";
+char* MQTT_client = "kitchen_led";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+unsigned long waitCount = 0;                 // counter
+uint8_t conn_stat = 0;                       // Connection status for WiFi and MQTT:
+
 int n_r = 255;
 int n_g = 255;
 int n_b = 255;
-int n_i = 255;
+int n_i = 0;
+
+const char* Status = "{\"Message\":\"up and running\"}";
 
 void set_color(int lamp_nr, int r, int g, int b) {
   // Fix note: r swipped with g. This is grb diode.
@@ -76,46 +82,30 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void setup_wifi() {
-
     delay(10);
     // We start by connecting to a WiFi network
     Serial.println();
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
-    WiFi.mode(WIFI_STA);
+    //WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    //Serial.println("");
+    //Serial.println("WiFi connected");
+    //Serial.println("IP address: ");
+    //Serial.println(WiFi.localIP());
 }
 
 void reconnect() {
  // Loop until we're reconnected
- while (!client.connected()) {
-   Serial.print("Attempting MQTT connection...");
    // Attempt to connect
- if (client.connect(topic)) {
+ if (client.connect(MQTT_client)) {
    Serial.println("connected");
    // ... and subscribe to topic
-   client.subscribe(topic);
- } else {
-   Serial.print("failed, rc=");
-   Serial.print(client.state());
-   Serial.println(" try again in 5 seconds");
-   // Wait 5 seconds before retrying
-   delay(5000);
-   }
+   // client.subscribe("lamp_1");
  }
 }
-
 
 void setup() {
   pixels.begin(); // This initializes the NeoPixel library.
@@ -124,15 +114,55 @@ void setup() {
     set_color(l_nb, n_r, n_g, n_b);
   }
   Serial.begin(9600);
-  setup_wifi();
+  WiFi.mode(WIFI_STA);
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
   //client.publish(log_topic, "lamp_2,"+ String(n_i) + "," + String(n_r) + "," + String(n_g) + "," + String(n_b));
 }
 
-void loop() {
-  if (!client.connected()) {
-    reconnect();
+void loop() {                                                     // with current code runs roughly 400 times per second
+// start of non-blocking connection setup section
+  if ((WiFi.status() != WL_CONNECTED) && (conn_stat != 1)) { conn_stat = 0; }
+  if ((WiFi.status() == WL_CONNECTED) && !client.connected() && (conn_stat != 3))  { conn_stat = 2; }
+  if ((WiFi.status() == WL_CONNECTED) && client.connected() && (conn_stat != 5)) { conn_stat = 4;}
+  switch (conn_stat) {
+    case 0:                                                       // MQTT and WiFi down: start WiFi
+      Serial.println("MQTT and WiFi down: start WiFi");
+      setup_wifi();
+      conn_stat = 1;
+      break;
+    case 1:                                                       // WiFi starting, do nothing here
+      Serial.println("WiFi starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 2:                                                       // WiFi up, MQTT down: start MQTT
+      Serial.println("WiFi up, MQTT down: start MQTT");
+      reconnect();
+      conn_stat = 3;
+      waitCount = 0;
+      break;
+    case 3:                                                       // WiFi up, MQTT starting, do nothing here
+      Serial.println("WiFi up, MQTT starting, wait : "+ String(waitCount));
+      waitCount++;
+      break;
+    case 4:                                                       // WiFi up, MQTT up: finish MQTT configuration
+      Serial.println("WiFi up, MQTT up: finish MQTT configuration");
+      client.subscribe(topic);
+      //mqttClient.publish(input_topic, Version);
+      conn_stat = 5;                    
+      break;
   }
-  client.loop();
+// end of non-blocking connection setup section
+
+// start section with tasks where WiFi/MQTT is required
+  if (conn_stat == 5) {
+    client.loop();                                              // internal household function for MQTT
+  } 
+// end of section for tasks where WiFi/MQTT are required
+
+// start section for tasks which should run regardless of WiFi/MQTT
+  if (waitCount > 550){
+    ESP.restart();
+  }
+// end of section for tasks which should run regardless of WiFi/MQTT
 }
