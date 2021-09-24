@@ -624,7 +624,7 @@ void loop(){
       }
     }
     Serial.println("battery v " + String(bV));
-    if(bV < 43.8){
+    if(bV < 43.8 && bV > 35.0){
       send_to_arduino("f");
     }
     last_bSOC = bSOC.toInt();
