@@ -35,6 +35,7 @@ const char* Version = "{\"Version\":\"low_prio_wifi_v2\"}";
 const char* Status = "{\"Message\":\"up and running\"}";
 
 String inverter_status = "n"; // means the inverter works normally, n means inverter is turned off
+int case_send = 0;
 
 
 WiFiClient espClient;
@@ -581,12 +582,19 @@ void loop(){
       client.loop();                                            //      give control to MQTT to send message to broker
       lastStatus = millis();                                        //      remember time of last sent status message
     }                                           // internal household function for OTA
+    String data;
+    if (s_relay.available()>0)
+      {
+        data=s_relay.readString();
+        Serial.println("e use" + data);
+        client.publish("energy_use", String(data).c_str(), true);
+      }
     client.loop();                                              // internal household function for MQTT
   } 
 // end of section for tasks where WiFi/MQTT are required
 
 // start section for tasks which should run regardless of WiFi/MQTT
-  if (waitCount > 1200){
+  if (waitCount > 600){
     ESP.restart();
   }
   if (millis() - lastTask > 8000) {                                 // Print message every second (just as an example)
@@ -595,45 +603,32 @@ void loop(){
     String data;
     get_charger_data(&bSOC, &live_l_bV, &data);
     float bSOC_average = (last_bSOC + bSOC.toInt()) / 2;
-    if(bSOC_average > 90){
-      delay(40);
-      send_to_arduino("7");
-      inverter_status = "o";
+    float bV = live_l_bV.toFloat() / 100;
+    if(bSOC_average > 95){
+      if(case_send == 0){
+        delay(40);
+        send_to_arduino("7");
+        case_send = 1;
+      }else if(case_send == 1){
+        delay(40);
+        send_to_arduino("2"); // turn on car charging
+        case_send = 2;
+      }else if(case_send == 2){
+        delay(40);
+        send_to_arduino("6"); // turn on comp
+        case_send = 3;
+      }else if(case_send == 3){
+        delay(40);
+        send_to_arduino("4"); // turn on comp
+        case_send = 0;
+      }
     }
-    if(bSOC_average < 25){
-      send_to_arduino("a");
-      delay(200);
-      send_to_arduino("b");
-      delay(200);
-      send_to_arduino("c");
-      delay(200);
-      send_to_arduino("d");
-      delay(200);
-      send_to_arduino("e");
-      delay(200);
-      send_to_arduino("g");
-      delay(200);
+    Serial.println("battery v " + String(bV));
+    if(bV < 43.8){
       send_to_arduino("f");
-      inverter_status = "n";
     }
     last_bSOC = bSOC.toInt();
     lastTask = millis();
   }
-  if (s.available()>0)
-    {
-      data=s.read();
-      client.publish("energy_use", String(data).c_str(), true);
-    }
   delay(100);
-}
-
-
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  if (s_relay.available()>0)
-  {
-    data=s_relay.read();
-    
-  }
 }
