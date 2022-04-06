@@ -27,7 +27,7 @@ boolean comp_load_on = false;
 
 double power_inverter;
 double power_7;
-int max_inverter_power = 2400;
+int max_inverter_power = 3200;
 double Irms;
 
 void setup() {
@@ -44,7 +44,7 @@ void setup() {
   digitalWrite(pin_1, HIGH);
   digitalWrite(pin_2, HIGH);
   digitalWrite(pin_3, HIGH);
-  digitalWrite(pin_4, HIGH);
+  digitalWrite(pin_4, LOW);
   digitalWrite(pin_5, HIGH);
   digitalWrite(pin_6, HIGH);
   digitalWrite(pin_7, HIGH);
@@ -69,7 +69,7 @@ void loop() {
         digitalWrite(pin_1, HIGH);
         digitalWrite(pin_2, HIGH);
         digitalWrite(pin_3, HIGH);
-        digitalWrite(pin_4, HIGH);
+        digitalWrite(pin_4, LOW);
         digitalWrite(pin_5, HIGH);
         digitalWrite(pin_6, HIGH);
         digitalWrite(pin_8, HIGH);
@@ -101,7 +101,7 @@ void loop() {
       digitalWrite(pin_1, HIGH);
       digitalWrite(pin_2, HIGH);
       digitalWrite(pin_3, HIGH);
-      digitalWrite(pin_4, HIGH);
+      digitalWrite(pin_4, LOW);
       digitalWrite(pin_5, HIGH);
       digitalWrite(pin_6, HIGH);
       digitalWrite(pin_8, HIGH);
@@ -116,7 +116,7 @@ void loop() {
       digitalWrite(pin_1, HIGH);
       digitalWrite(pin_2, HIGH);
       digitalWrite(pin_3, HIGH);
-      digitalWrite(pin_4, HIGH);
+      digitalWrite(pin_4, LOW);
       digitalWrite(pin_5, HIGH);
       digitalWrite(pin_6, HIGH);
       digitalWrite(pin_8, HIGH);
@@ -148,9 +148,9 @@ void loop() {
       }if (a == "c"){
         digitalWrite(pin_3, HIGH);
       }if (a == "4"){
-        digitalWrite(pin_4, LOW);
-      }if (a == "d"){
         digitalWrite(pin_4, HIGH);
+      }if (a == "d"){
+        digitalWrite(pin_4, LOW);
       }if (a == "5"){
         digitalWrite(pin_5, LOW);
       }if (a == "d"){
@@ -168,5 +168,4 @@ void loop() {
       }
     }
   }
-}
 }
