@@ -34,6 +34,7 @@ unsigned long lastTask = 0;                  // counter in example code for conn
 const char* Version = "{\"Version\":\"low_prio_wifi_v2\"}";
 const char* Status = "{\"Message\":\"up and running\"}";
 
+String a_option = "y";
 String inverter_status = "n"; // means the inverter works normally, n means inverter is turned off
 int case_send = 0;
 
@@ -461,12 +462,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
  for (int i=0;i<length;i++) {
   char receivedChar = (char)payload[i];
 
-  Serial.print("inverter_status");
-  Serial.print(inverter_status);
   sign += receivedChar;
   Serial.print("sign");
   Serial.print(sign);
-  send_to_arduino(sign);
+  if(sign == "n"){
+    a_option="n";
+  }else if(sign == "y"){
+    a_option="y";
+  }
+  else{
+    send_to_arduino(sign);
+  }
+  
   /*
   if (sign == "f"){ //  inverter_status
     inverter_status = "n";
@@ -604,7 +611,7 @@ void loop(){
     get_charger_data(&bSOC, &live_l_bV, &data);
     float bSOC_average = (last_bSOC + bSOC.toInt()) / 2;
     float bV = live_l_bV.toFloat() / 100;
-    if(bSOC_average > 95){
+    if((bSOC_average > 95) && (a_option=="y")){
       if(case_send == 0){
         delay(40);
         send_to_arduino("7");
