@@ -1,0 +1,299 @@
+esphome:
+  name: "battery-management-data"
+  # includes:
+  # - arduino_port_expander.h
+
+substitutions:
+  updates: 10s
+  name: solarstation-x
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "+E8jtiC5CsWlmz+1DzPBAeI2llpsnU/CZ+sKROUjGzk="
+
+ota:
+  password: "ceaa226a0f69370aa15d07794074a887"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Batter-Management"
+    password: "uMMoiwbILe5j"
+
+captive_portal:
+
+mqtt:
+  broker: "192.168.1.198"
+  port: 1883
+
+uart:
+  id: mod_bus
+  tx_pin: GPIO16
+  rx_pin: GPIO17
+  baud_rate: 115200
+  stop_bits: 1
+
+modbus:
+  #flow_control_pin: 23
+  send_wait_time: 200ms
+  id: mod_bus_epever
+
+text_sensor:
+  - name: "rtc_clock"
+    platform: modbus_controller
+    modbus_controller_id: epever
+    id: rtc_clock
+    internal: true
+    register_type: holding
+    address: 0x9013
+    register_count: 3
+    raw_encode: HEXBYTES
+
+modbus_controller:
+  - id: epever
+    ## the Modbus device addr
+    address: 0x1
+    modbus_id: mod_bus_epever
+    command_throttle: 200ms
+    setup_priority: -10
+    update_interval: ${updates}
+
+packages:
+  tracer-rated-datum: !include tracer-rated-datum.yaml
+  tracer-real-time: !include tracer-real-time.yaml
+  tracer-stats: !include tracer-stats.yaml
+  #tracer-settings: !include tracer-settings.yaml
+
+# sensor:
+#   - platform: modbus_controller
+#     modbus_controller_id: epever
+#     id: charging_power_epever
+#     name: "Charging power"
+#     address: 0x3106
+#     unit_of_measurement: "W"
+#     register_type: read
+#     value_type: U_DWORD_R
+#     accuracy_decimals: 1
+#     filters:
+#       - multiply: 0.01
+# 1 = A1
+# ape_analog_input(expander1, 2)};
+
+# Define the custom component for the port expander
+# custom_component:
+#   - id: expander1
+#     lambda: |-
+#       auto expander = new ArduinoPortExpander(i2c_component, 0x08, true);
+#       Serial.println("Expander initialized");
+#       return {expander};
+
+# binary_sensor:
+#   - platform: custom
+#     lambda: |-
+#       return {ape_binary_sensor(expander1, 7),
+#               ape_binary_sensor(expander1, 8),
+#               ape_binary_sensor(expander1, 9),
+#               ape_binary_sensor(expander1, 10),
+#               ape_binary_sensor(expander1, 14) // 14 = A0
+#               };
+
+#     binary_sensors:
+#       - id: push_button1
+#         internal: true # don't show on HA
+#       - id: push_button2
+#         internal: true # don't show on HA
+#       - id: pir_sensor
+#         name: Living PIR
+#         device_class: motion
+#       - id: window_reed_switch
+#         name: Living Window
+#         device_class: window
+#       - id: garage_door
+#         name: Garage garage
+#         device_class: garage_door
+
+sensor:
+  - platform: pulse_counter
+    pin: GPIO15
+    unit_of_measurement: 'W'
+    name: 'battery_output_power'
+    update_interval: 20s
+    internal_filter: 10us
+    filters:
+      - multiply: 60.0 # 0.06  # (60s/1000 pulses per kWh)
+
+    total:
+      unit_of_measurement: 'kWh'
+      name: 'battery_total_out_power'
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.001  # (1/1000 pulses per kWh)
+  - platform: pulse_counter
+    pin: GPIO5
+    unit_of_measurement: 'W'
+    name: 'home_all_power'
+    update_interval: 20s
+    internal_filter: 10us
+    filters:
+      - multiply: 60.0 # 0.06  # (60s/1000 pulses per kWh)
+
+    total:
+      unit_of_measurement: 'kWh'
+      name: 'home_all_energy'
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.001  # (1/1000 pulses per kWh)
+
+  # Example source sensor
+  - platform: adc
+    pin: GPIO36
+    id: adc_sensor_1
+    attenuation: auto
+  - platform: adc
+    pin: GPIO35
+    id: adc_sensor_2
+    attenuation: auto
+  - platform: adc
+    pin: GPIO32
+    id: adc_sensor_3
+    attenuation: auto
+  - platform: adc
+    pin: GPIO33
+    id: adc_sensor_4
+    attenuation: auto
+  - platform: ct_clamp
+    sensor: adc_sensor_1
+    name: "heat pump current"
+    id: heat_pump_current
+    update_interval: 6s
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0.02 -> 0
+          # Known load: 4.0A
+          # Value shown in logs: 0.1333A
+          - 0.35 -> 7
+  - platform: ct_clamp
+    sensor: adc_sensor_2
+    name: "Appliances load current"
+    id: appliances_load_current
+    update_interval: 6s
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0.02 -> 0
+          # Known load: 4.0A
+          # Value shown in logs: 0.1333A
+          - 0.35 -> 7
+  - platform: ct_clamp
+    sensor: adc_sensor_3
+    name: "Kitchen load current"
+    id: kitchen_load_current
+    update_interval: 6s
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0.02 -> 0
+          # Known load: 4.0A
+          # Value shown in logs: 0.1333A
+          - 0.35 -> 7
+  - platform: ct_clamp
+    sensor: adc_sensor_4
+    name: "Battery load current"
+    id: battery_load_current
+    update_interval: 6s
+    filters:
+      - calibrate_linear:
+          # Measured value of 0 maps to 0A
+          - 0.02 -> 0
+          # Known load: 4.0A
+          # Value shown in logs: 0.1333A
+          - 0.35 -> 7
+    on_value_range:
+    - above: 12.7
+      then:
+        - switch.turn_off: appliances_load
+        - switch.turn_off: heat_pump_switch
+        - switch.turn_off: car_charging_switch
+    # - below: 12.4
+    #   then:
+    #     - switch.turn_on: battery_load
+  - platform: template
+    name: "Total current"
+    id: "total_current"
+    lambda: |-
+      return id(appliances_load_current).state + id(heat_pump_current).state;
+    update_interval: 100ms
+    on_value_range:
+    - above: 14
+      then:
+        - switch.turn_off: appliances_load
+        - switch.turn_off: heat_pump_switch
+        - switch.turn_off: car_charging_switch
+    - below: 12
+      then:
+        - switch.turn_on: appliances_load
+        - switch.turn_on: heat_pump_switch
+        - switch.turn_on: car_charging_switch
+
+  # - platform: template
+  #   name: "Power Monitor Switch"
+  #   id: power_monitor_switch
+  #   lambda: |-
+  #     float total_current = id(kitchen_current).state + id(appliances_current).state;
+  #     if (total_current > 14) {
+  #       if ((total_current - id(kitchen_current).state) < 14) {
+  #         id(kitchen_switch).turn_off();
+  #         return false;
+  #       } else if ((total_current - id(appliances_current).state) < 14) {
+  #         id(appliances_switch).turn_off();
+  #         return false;
+  #       } else {
+  #         id(kitchen_switch).turn_off();
+  #         id(appliances_switch).turn_off();
+  #         return false;
+  #       }
+  #     } else {
+  #       id(kitchen_switch).turn_on();
+  #       id(appliances_switch).turn_on();
+  #       return true;
+  #     }
+
+
+# Example configuration entry
+# switch:
+#   - platform: gpio
+#     pin: GPIO32
+#     name: "battery power switch"
+#     id: battery_load
+
+# Example configuration entry
+switch:
+  - platform: gpio
+    pin: GPIO22
+    name: "inverter switch"
+  - platform: gpio
+    pin: GPIO1
+    name: "appliances load"
+    id: appliances_load
+    inverted: true
+  - platform: gpio
+    pin: GPIO3
+    name: "heat pump switch"
+    id: heat_pump_switch
+  - platform: gpio
+    pin: GPIO21
+    name: "car charging switch"
+    id: car_charging_switch
