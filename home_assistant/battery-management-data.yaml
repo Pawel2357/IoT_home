@@ -14,6 +14,10 @@ esp32:
 
 # Enable logging
 logger:
+# logger:
+#   level: DEBUG
+#   logs:
+#     binary_sensor.template: DEBUG
 
 # Enable Home Assistant API
 api:
@@ -76,54 +80,6 @@ packages:
   tracer-stats: !include tracer-stats.yaml
   #tracer-settings: !include tracer-settings.yaml
 
-# sensor:
-#   - platform: modbus_controller
-#     modbus_controller_id: epever
-#     id: charging_power_epever
-#     name: "Charging power"
-#     address: 0x3106
-#     unit_of_measurement: "W"
-#     register_type: read
-#     value_type: U_DWORD_R
-#     accuracy_decimals: 1
-#     filters:
-#       - multiply: 0.01
-# 1 = A1
-# ape_analog_input(expander1, 2)};
-
-# Define the custom component for the port expander
-# custom_component:
-#   - id: expander1
-#     lambda: |-
-#       auto expander = new ArduinoPortExpander(i2c_component, 0x08, true);
-#       Serial.println("Expander initialized");
-#       return {expander};
-
-# binary_sensor:
-#   - platform: custom
-#     lambda: |-
-#       return {ape_binary_sensor(expander1, 7),
-#               ape_binary_sensor(expander1, 8),
-#               ape_binary_sensor(expander1, 9),
-#               ape_binary_sensor(expander1, 10),
-#               ape_binary_sensor(expander1, 14) // 14 = A0
-#               };
-
-#     binary_sensors:
-#       - id: push_button1
-#         internal: true # don't show on HA
-#       - id: push_button2
-#         internal: true # don't show on HA
-#       - id: pir_sensor
-#         name: Living PIR
-#         device_class: motion
-#       - id: window_reed_switch
-#         name: Living Window
-#         device_class: window
-#       - id: garage_door
-#         name: Garage garage
-#         device_class: garage_door
-
 sensor:
   - platform: pulse_counter
     pin: GPIO15
@@ -161,23 +117,32 @@ sensor:
     pin: GPIO36
     id: adc_sensor_1
     attenuation: auto
+    update_interval: 200ms
+    internal: true
   - platform: adc
     pin: GPIO35
     id: adc_sensor_2
     attenuation: auto
+    update_interval: 200ms
+    internal: true
   - platform: adc
     pin: GPIO32
     id: adc_sensor_3
     attenuation: auto
+    update_interval: 200ms
+    internal: true
   - platform: adc
     pin: GPIO33
     id: adc_sensor_4
     attenuation: auto
+    update_interval: 200ms
+    internal: true
+
   - platform: ct_clamp
     sensor: adc_sensor_1
     name: "heat pump current"
-    id: heat_pump_current
-    update_interval: 6s
+    id: heat_pump_current_internal
+    internal: true
     filters:
       - calibrate_linear:
           # Measured value of 0 maps to 0A
@@ -188,8 +153,8 @@ sensor:
   - platform: ct_clamp
     sensor: adc_sensor_2
     name: "Appliances load current"
-    id: appliances_load_current
-    update_interval: 6s
+    id: appliances_load_current_internal
+    internal: true
     filters:
       - calibrate_linear:
           # Measured value of 0 maps to 0A
@@ -200,8 +165,8 @@ sensor:
   - platform: ct_clamp
     sensor: adc_sensor_3
     name: "Kitchen load current"
-    id: kitchen_load_current
-    update_interval: 6s
+    id: kitchen_load_current_internal
+    internal: true
     filters:
       - calibrate_linear:
           # Measured value of 0 maps to 0A
@@ -212,8 +177,8 @@ sensor:
   - platform: ct_clamp
     sensor: adc_sensor_4
     name: "Battery load current"
-    id: battery_load_current
-    update_interval: 6s
+    id: battery_load_current_internal
+    internal: true
     filters:
       - calibrate_linear:
           # Measured value of 0 maps to 0A
@@ -221,69 +186,98 @@ sensor:
           # Known load: 4.0A
           # Value shown in logs: 0.1333A
           - 0.35 -> 7
-    on_value_range:
-    - above: 12.7
-      then:
-        - switch.turn_off: appliances_load
-        - switch.turn_off: heat_pump_switch
-        - switch.turn_off: car_charging_switch
-    # - below: 12.4
-    #   then:
-    #     - switch.turn_on: battery_load
+
   - platform: template
-    name: "Total current"
-    id: "total_current"
+    name: "Heat Pump Current"
+    id: heat_pump_current
     lambda: |-
-      return id(appliances_load_current).state + id(heat_pump_current).state;
-    update_interval: 100ms
-    on_value_range:
-    - above: 14
-      then:
-        - switch.turn_off: appliances_load
-        - switch.turn_off: heat_pump_switch
-        - switch.turn_off: car_charging_switch
-    - below: 12
-      then:
-        - switch.turn_on: appliances_load
-        - switch.turn_on: heat_pump_switch
-        - switch.turn_on: car_charging_switch
+      return id(heat_pump_current_internal).state;
+    update_interval: 2s
+    unit_of_measurement: "A"
 
-  # - platform: template
-  #   name: "Power Monitor Switch"
-  #   id: power_monitor_switch
-  #   lambda: |-
-  #     float total_current = id(kitchen_current).state + id(appliances_current).state;
-  #     if (total_current > 14) {
-  #       if ((total_current - id(kitchen_current).state) < 14) {
-  #         id(kitchen_switch).turn_off();
-  #         return false;
-  #       } else if ((total_current - id(appliances_current).state) < 14) {
-  #         id(appliances_switch).turn_off();
-  #         return false;
-  #       } else {
-  #         id(kitchen_switch).turn_off();
-  #         id(appliances_switch).turn_off();
-  #         return false;
-  #       }
-  #     } else {
-  #       id(kitchen_switch).turn_on();
-  #       id(appliances_switch).turn_on();
-  #       return true;
-  #     }
+  - platform: template
+    name: "Appliances load current"
+    id: appliances_load_current
+    lambda: |-
+      return id(appliances_load_current_internal).state;
+    update_interval: 2s
+    unit_of_measurement: "A"
 
+  - platform: template
+    name: "Kitchen load current"
+    id: kitchen_load_current
+    lambda: |-
+      float current = id(kitchen_load_current_internal).state;
+      return current;
+    update_interval: 2s
+    unit_of_measurement: "A"
 
-# Example configuration entry
-# switch:
-#   - platform: gpio
-#     pin: GPIO32
-#     name: "battery power switch"
-#     id: battery_load
+  - platform: template
+    name: "Battery load current"
+    id: battery_load_current
+    lambda: |-
+      return id(battery_load_current_internal).state;
+    update_interval: 2s
+    unit_of_measurement: "A"
 
-# Example configuration entry
+  - platform: template
+    name: "Power Monitor Switch"
+    id: power_monitor_switch
+    lambda: |-
+      float current_battery_load = id(battery_load_current_internal).state;
+      float current_heat_pump = id(heat_pump_current_internal).state;
+      float current_appliances = id(appliances_load_current_internal).state;
+
+      if (current_battery_load > 12.3) {
+        if (id(car_charging_switch).state) {
+          id(car_charging_switch).turn_off();
+          return false;
+        } else {
+          float available_capacity = 12.3 - current_battery_load;
+          if (current_heat_pump < available_capacity && id(heat_pump_switch).state) {
+            id(appliances_load).turn_off();
+            return false;
+          } else if (current_appliances < available_capacity && id(appliances_load).state) {
+            id(heat_pump_switch).turn_off();
+            return false;
+          } else {
+            id(appliances_load).turn_off();
+            id(heat_pump_switch).turn_off();
+            id(car_charging_switch).turn_off();
+            return false;
+          }
+        }
+      } else {
+        if (id(inverter_switch).state) {
+          if (current_heat_pump + current_appliances < 12.3) {
+            id(heat_pump_switch).turn_on();
+            id(appliances_load).turn_on();
+          }
+
+          if (current_appliances + current_heat_pump < 5) {
+            id(car_charging_switch).turn_on();
+          }
+
+          return true;
+        }
+      }
+      return false;
+    update_interval: 300ms
+
+interval:
+  - interval: 400ms
+    then:
+      - lambda: |-
+          id(heat_pump_current_internal).update();
+          id(appliances_load_current_internal).update();
+          id(kitchen_load_current_internal).update();
+          id(battery_load_current_internal).update();
+
 switch:
   - platform: gpio
     pin: GPIO22
     name: "inverter switch"
+    id: inverter_switch
   - platform: gpio
     pin: GPIO1
     name: "appliances load"
